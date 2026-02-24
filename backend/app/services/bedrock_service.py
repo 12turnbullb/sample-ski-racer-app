@@ -7,6 +7,7 @@ to analyze ski videos and images for form feedback.
 
 import boto3
 import logging
+import os
 from typing import Optional
 from botocore.exceptions import ClientError
 
@@ -26,18 +27,18 @@ class BedrockService:
     via the Bedrock Converse API.
     """
     
-    def __init__(self, region_name: str = "us-east-1"):
+    def __init__(self, region_name: str = None):
         """
         Initialize the Bedrock service with AWS credentials.
-        
+
         Args:
-            region_name: AWS region for Bedrock service (default: us-east-1)
+            region_name: AWS region for Bedrock service (default: AWS_REGION env var or us-east-1)
         """
         try:
-            self.bedrock_client = boto3.client(
-                service_name='bedrock-runtime',
-                region_name=region_name
-            )
+            aws_profile = os.getenv("AWS_PROFILE", "default")
+            aws_region = region_name or os.getenv("AWS_REGION", "us-east-1")
+            session = boto3.Session(profile_name=aws_profile, region_name=aws_region)
+            self.bedrock_client = session.client(service_name='bedrock-runtime')
             # Model IDs for different media types
             self.claude_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"  # For images
             self.nova_model_id = "us.amazon.nova-pro-v1:0"  # For videos
