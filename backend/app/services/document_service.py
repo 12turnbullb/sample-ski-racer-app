@@ -1,40 +1,49 @@
 """
-Document service with business logic, file storage, and AI analysis.
+Document service — S3-backed file storage with Bedrock AI analysis.
 
-This module provides business logic layer for video/image upload, storage,
-and AI-powered ski form analysis using Amazon Bedrock.
+File upload uses the presigned URL flow:
+  1. create_upload_url()  → presigned PUT URL + pending DB record
+  2. Frontend PUTs file directly to S3 (bypasses Lambda)
+  3. analyze_document()   → reads from S3, calls Bedrock, updates DB record
+
+For local development (no UPLOADS_BUCKET set), the service falls back to
+writing files to disk and reading them from disk for analysis.
 
 Requirements: 3.1, 3.3, 3.4, 3.5, 7.2
 """
 
 import os
 import uuid
+import logging
 from pathlib import Path
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from fastapi import UploadFile
 
+import boto3
+from botocore.exceptions import ClientError
+
 from app.models import Document
 from app.repositories.document_repository import DocumentRepository
 from app.services.bedrock_service import BedrockService, BedrockServiceError
 
+logger = logging.getLogger(__name__)
 
-# File validation constants - Updated for video and image analysis
+# File validation constants
 ALLOWED_FILE_TYPES = {
     'video/mp4': ['.mp4'],
     'video/quicktime': ['.mov'],
     'image/jpeg': ['.jpg', '.jpeg'],
-    'image/png': ['.png']
+    'image/png': ['.png'],
 }
-
-# Flatten allowed extensions for easy checking
 ALLOWED_EXTENSIONS = {ext for exts in ALLOWED_FILE_TYPES.values() for ext in exts}
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
 
-# Maximum file size: 50MB in bytes (increased for video files)
-MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+# Presigned URL expiry
+PRESIGNED_EXPIRY = 900  # 15 minutes
 
-# Default upload directory
-UPLOAD_DIR = Path("uploads/documents")
+# Local dev fallback upload directory
+LOCAL_UPLOAD_DIR = Path("uploads/documents")
 
 
 class DocumentServiceError(Exception):
@@ -43,300 +52,333 @@ class DocumentServiceError(Exception):
 
 
 class ValidationError(DocumentServiceError):
-    """Exception raised for validation errors."""
+    """Raised for validation errors (bad file type, size, etc.)."""
     pass
 
 
 class NotFoundError(DocumentServiceError):
-    """Exception raised when a document is not found."""
+    """Raised when a document is not found."""
     pass
 
 
 class FileStorageError(DocumentServiceError):
-    """Exception raised for file storage errors."""
+    """Raised for S3 or local I/O errors."""
     pass
 
 
 class DocumentService:
     """
-    Service class for video/image upload, storage, and AI analysis.
-    
-    Provides methods for uploading, analyzing, retrieving, and deleting
-    ski form videos/images with AI-powered feedback from Amazon Bedrock.
+    Service for document upload (presigned URL flow), Bedrock analysis, and deletion.
+
+    In production (UPLOADS_BUCKET set): uses S3 presigned URLs.
+    In local dev (no UPLOADS_BUCKET): falls back to disk I/O.
     """
-    
-    def __init__(self, db: Session, upload_dir: Optional[Path] = None, bedrock_region: str = "us-east-1"):
-        """
-        Initialize the service with a database session, upload directory, and Bedrock client.
-        
-        Args:
-            db: SQLAlchemy database session
-            upload_dir: Directory for storing uploaded files (defaults to UPLOAD_DIR)
-            bedrock_region: AWS region for Bedrock service
-        """
+
+    def __init__(self, db: Session, bedrock_region: str = "us-east-1"):
         self.repository = DocumentRepository(db)
-        self.upload_dir = upload_dir or UPLOAD_DIR
-        
-        # Initialize Bedrock service (may be None if AWS not configured)
+        self.uploads_bucket = os.environ.get("UPLOADS_BUCKET", "")
+        self._aws_region = os.environ.get("AWS_REGION_NAME",
+                                          os.environ.get("AWS_DEFAULT_REGION", bedrock_region))
+
+        # S3 client (used in production)
+        self._s3: Optional[boto3.client] = None
+
+        # Bedrock service
         try:
             self.bedrock_service = BedrockService(region_name=bedrock_region)
         except Exception as e:
-            print(f"Warning: Bedrock service not available: {str(e)}")
+            logger.warning(f"Bedrock service not available: {e}")
             self.bedrock_service = None
-        
-        # Ensure upload directory exists
-        self.upload_dir.mkdir(parents=True, exist_ok=True)
-    
+
+    @property
+    def s3(self):
+        """Lazily initialise the S3 client."""
+        if self._s3 is None:
+            self._s3 = boto3.client("s3", region_name=self._aws_region)
+        return self._s3
+
+    # -------------------------------------------------------------------------
+    # Presigned URL upload flow (production)
+    # -------------------------------------------------------------------------
+
+    def create_upload_url(
+        self,
+        racer_id: str,
+        filename: str,
+        file_type: str,
+        file_size: int,
+    ) -> dict:
+        """
+        Validate upload parameters, create a pending DB record, and return a
+        presigned S3 PUT URL.
+
+        Returns:
+            dict with keys: upload_url, document_id, s3_key
+        """
+        # Validate file type
+        ext = self._get_file_extension(filename)
+        if ext not in ALLOWED_EXTENSIONS:
+            allowed = ', '.join(sorted(ALLOWED_EXTENSIONS))
+            raise ValidationError(
+                f"File type '{ext}' is not allowed. Allowed types: {allowed}"
+            )
+        if file_type.lower() not in ALLOWED_FILE_TYPES:
+            # Allow common browser variations
+            if file_type.lower() not in ('image/jpg', 'image/pjpeg', 'video/x-m4v'):
+                allowed = ', '.join(sorted(ALLOWED_FILE_TYPES.keys()))
+                raise ValidationError(
+                    f"Content type '{file_type}' is not allowed. Allowed: {allowed}"
+                )
+
+        # Validate file size
+        if file_size > MAX_FILE_SIZE:
+            raise ValidationError(
+                f"File size ({file_size} bytes) exceeds the 50 MB limit."
+            )
+
+        s3_key = f"documents/{uuid.uuid4()}{ext}"
+
+        # Generate presigned PUT URL
+        try:
+            upload_url = self.s3.generate_presigned_url(
+                "put_object",
+                Params={
+                    "Bucket": self.uploads_bucket,
+                    "Key": s3_key,
+                    "ContentType": file_type,
+                },
+                ExpiresIn=PRESIGNED_EXPIRY,
+            )
+        except ClientError as e:
+            raise FileStorageError(
+                f"Failed to generate presigned upload URL: {e}"
+            ) from e
+
+        # Create pending DB record (analysis will be populated after confirm)
+        try:
+            document = self.repository.create(
+                racer_id=racer_id,
+                filename=filename,
+                file_path=s3_key,
+                file_type=file_type,
+                file_size=file_size,
+                analysis=None,
+                status="pending",
+            )
+        except Exception as e:
+            raise DocumentServiceError(
+                f"Failed to create document record: {e}"
+            ) from e
+
+        return {
+            "upload_url": upload_url,
+            "document_id": document.id,
+            "s3_key": s3_key,
+        }
+
+    def analyze_document(self, document_id: str) -> Document:
+        """
+        Read the uploaded file from S3, run Bedrock analysis, and update the
+        DB record with the result (status → "complete").
+        """
+        document = self.get_document(document_id)
+        s3_key = document.file_path
+
+        # Read file bytes from S3
+        try:
+            response = self.s3.get_object(Bucket=self.uploads_bucket, Key=s3_key)
+            file_bytes = response["Body"].read()
+        except ClientError as e:
+            raise FileStorageError(
+                f"Failed to read file from S3 (key={s3_key}): {e}"
+            ) from e
+
+        # Analyse with Bedrock
+        analysis_text = self._run_bedrock_analysis(
+            file_bytes, document.file_type, document.filename
+        )
+
+        # Update DB record
+        updated = self.repository.update(document_id, analysis=analysis_text, status="complete")
+        if not updated:
+            raise NotFoundError(f"Document not found with id: {document_id}")
+        return updated
+
+    def get_document_url(self, document_id: str) -> str:
+        """Return a presigned GET URL (15-minute expiry) for viewing the file."""
+        document = self.get_document(document_id)
+        try:
+            url = self.s3.generate_presigned_url(
+                "get_object",
+                Params={"Bucket": self.uploads_bucket, "Key": document.file_path},
+                ExpiresIn=PRESIGNED_EXPIRY,
+            )
+            return url
+        except ClientError as e:
+            raise FileStorageError(
+                f"Failed to generate presigned download URL: {e}"
+            ) from e
+
+    # -------------------------------------------------------------------------
+    # Legacy single-step upload (local dev / backward compat)
+    # -------------------------------------------------------------------------
+
     def upload_document(self, racer_id: str, file: UploadFile) -> Document:
         """
-        Upload and analyze a video/image file with AI-powered ski form feedback.
-        
-        Validates file type and size, stores the file to disk with a unique
-        filename, analyzes the content using Amazon Bedrock, and creates a 
-        database record with the analysis.
-        
-        Args:
-            racer_id: UUID of the racer who owns this document
-            file: Uploaded file from FastAPI
-            
-        Returns:
-            Document: The created document record with metadata and AI analysis
-            
-        Raises:
-            ValidationError: If file validation fails (type, size, missing file)
-            FileStorageError: If file storage to disk fails
-            
-        Requirements:
-            - 3.1: Store video/image and associate with racer
-            - 3.3: Return error message describing failure reason
-            - 3.4: Support MP4, MOV, JPG, JPEG, PNG formats
-            - 7.2: Persist file to disk
+        Upload and analyse in one step (used in local development when there
+        is no UPLOADS_BUCKET configured).
         """
-        # Validate file is present
         if not file or not file.filename:
             raise ValidationError("No file provided for upload")
-        
-        # Validate file type
+
         self.validate_file(file)
-        
-        # Generate unique filename to avoid collisions
-        file_extension = self._get_file_extension(file.filename)
-        unique_filename = f"{uuid.uuid4()}{file_extension}"
-        file_path = self.upload_dir / unique_filename
-        
-        # Read file content and validate size
+
+        ext = self._get_file_extension(file.filename)
+        unique_filename = f"{uuid.uuid4()}{ext}"
+
+        # Save to disk
+        LOCAL_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+        file_path = LOCAL_UPLOAD_DIR / unique_filename
+
         try:
             file_content = file.file.read()
             file_size = len(file_content)
-            
-            # Validate file size
+
             if file_size > MAX_FILE_SIZE:
                 raise ValidationError(
-                    f"File size ({file_size} bytes) exceeds maximum allowed size "
-                    f"({MAX_FILE_SIZE} bytes / 50MB)"
+                    f"File size ({file_size} bytes) exceeds the 50 MB limit."
                 )
-            
-            # Write file to disk
-            with open(file_path, 'wb') as f:
+
+            with open(file_path, "wb") as f:
                 f.write(file_content)
-                
+
         except ValidationError:
-            # Re-raise validation errors
             raise
         except Exception as e:
-            # Wrap file I/O errors
-            raise FileStorageError(
-                f"Failed to store file to disk: {str(e)}"
-            ) from e
+            raise FileStorageError(f"Failed to store file to disk: {e}") from e
         finally:
-            # Reset file pointer for potential reuse
             file.file.seek(0)
-        
-        # Analyze the video/image with Bedrock
-        analysis_text = None
-        if self.bedrock_service:
-            try:
-                analysis_text = self.bedrock_service.analyze_ski_form(
-                    file_path=str(file_path),
-                    file_type=file.content_type or 'application/octet-stream',
-                    filename=file.filename
-                )
-            except BedrockServiceError as e:
-                # Log the error but don't fail the upload
-                # Store a message indicating analysis failed
-                analysis_text = f"Analysis unavailable: {str(e)}"
-                print(f"Warning: Bedrock analysis failed: {str(e)}")
-        else:
-            analysis_text = "Analysis unavailable: AWS Bedrock is not configured. Please configure AWS credentials to enable AI-powered ski form analysis."
-        
-        # Create database record with analysis
+
+        # Analyse with Bedrock (read bytes from disk)
+        try:
+            file_bytes = file_path.read_bytes()
+        except Exception as e:
+            file_bytes = b""
+
+        analysis_text = self._run_bedrock_analysis(
+            file_bytes, file.content_type or "application/octet-stream", file.filename
+        )
+
         try:
             document = self.repository.create(
                 racer_id=racer_id,
                 filename=file.filename,
                 file_path=str(file_path),
-                file_type=file.content_type or 'application/octet-stream',
+                file_type=file.content_type or "application/octet-stream",
                 file_size=file_size,
-                analysis=analysis_text
+                analysis=analysis_text,
+                status="complete",
             )
             return document
-            
         except Exception as e:
-            # If database creation fails, clean up the uploaded file
             try:
                 if file_path.exists():
                     file_path.unlink()
             except Exception:
-                pass  # Best effort cleanup
-            
-            raise DocumentServiceError(
-                f"Failed to create document record: {str(e)}"
-            ) from e
-    
+                pass
+            raise DocumentServiceError(f"Failed to create document record: {e}") from e
+
+    # -------------------------------------------------------------------------
+    # Shared read / delete
+    # -------------------------------------------------------------------------
+
     def get_documents(self, racer_id: str) -> List[Document]:
-        """
-        Retrieve all documents for a racer.
-        
-        Args:
-            racer_id: UUID of the racer
-            
-        Returns:
-            List[Document]: List of documents associated with the racer
-            
-        Requirement: 3.2 - Retrieve and display all associated Ski_Analysis_Documents
-        """
+        """Retrieve all documents for a racer."""
         try:
             return self.repository.get_by_racer(racer_id)
         except Exception as e:
-            raise DocumentServiceError(
-                f"Failed to retrieve documents: {str(e)}"
-            ) from e
-    
+            raise DocumentServiceError(f"Failed to retrieve documents: {e}") from e
+
     def get_document(self, document_id: str) -> Document:
-        """
-        Retrieve a specific document by ID.
-        
-        Args:
-            document_id: UUID of the document
-            
-        Returns:
-            Document: The document record
-            
-        Raises:
-            NotFoundError: If document is not found
-            
-        Requirement: 3.2 - Retrieve and display Ski_Analysis_Documents
-        """
+        """Retrieve a single document by ID."""
         document = self.repository.get_by_id(document_id)
         if not document:
-            raise NotFoundError(
-                f"Document not found with id: {document_id}"
-            )
+            raise NotFoundError(f"Document not found with id: {document_id}")
         return document
-    
+
     def delete_document(self, document_id: str) -> None:
         """
-        Delete a document file and database record.
-        
-        Removes both the file from disk and the database record. If the file
-        doesn't exist on disk, still removes the database record.
-        
-        Args:
-            document_id: UUID of the document to delete
-            
-        Raises:
-            NotFoundError: If document is not found in database
-            
-        Requirement: 3.5 - Remove Ski_Analysis_Document from storage
+        Delete a document — removes from S3 (or disk) and the DB record.
         """
-        # Get document record to find file path
         document = self.get_document(document_id)
-        
-        # Delete file from disk (best effort - don't fail if file missing)
-        try:
-            file_path = Path(document.file_path)
-            if file_path.exists():
-                file_path.unlink()
-        except Exception as e:
-            # Log warning but continue with database deletion
-            # In production, this should use proper logging
-            print(f"Warning: Failed to delete file from disk: {str(e)}")
-        
-        # Delete database record
+
+        if self.uploads_bucket:
+            # Production: delete from S3
+            try:
+                self.s3.delete_object(
+                    Bucket=self.uploads_bucket, Key=document.file_path
+                )
+            except ClientError as e:
+                logger.warning(f"Failed to delete S3 object '{document.file_path}': {e}")
+        else:
+            # Local dev: delete from disk
+            try:
+                file_path = Path(document.file_path)
+                if file_path.exists():
+                    file_path.unlink()
+            except Exception as e:
+                logger.warning(f"Failed to delete local file '{document.file_path}': {e}")
+
         success = self.repository.delete(document_id)
         if not success:
-            raise NotFoundError(
-                f"Document not found with id: {document_id}"
-            )
-    
+            raise NotFoundError(f"Document not found with id: {document_id}")
+
+    # -------------------------------------------------------------------------
+    # Validation helpers
+    # -------------------------------------------------------------------------
+
     def validate_file(self, file: UploadFile) -> None:
-        """
-        Validate uploaded file type and size.
-        
-        Checks that the file has an allowed extension and content type.
-        File size validation is performed during upload to avoid reading
-        large files into memory unnecessarily.
-        
-        Args:
-            file: Uploaded file from FastAPI
-            
-        Raises:
-            ValidationError: If file type is not allowed
-            
-        Requirements:
-            - 3.3: Return error message describing failure reason
-            - 3.4: Support MP4, MOV, JPG, JPEG, PNG formats
-        """
+        """Validate uploaded file type (extension and content-type)."""
         if not file or not file.filename:
             raise ValidationError("No file provided for upload")
-        
-        # Get file extension
-        file_extension = self._get_file_extension(file.filename).lower()
-        
-        # Check if extension is allowed
-        if file_extension not in ALLOWED_EXTENSIONS:
-            allowed_list = ', '.join(sorted(ALLOWED_EXTENSIONS))
+
+        ext = self._get_file_extension(file.filename).lower()
+        if ext not in ALLOWED_EXTENSIONS:
+            allowed = ', '.join(sorted(ALLOWED_EXTENSIONS))
             raise ValidationError(
-                f"File type '{file_extension}' is not allowed. "
-                f"Allowed types: {allowed_list}"
+                f"File type '{ext}' is not allowed. Allowed types: {allowed}"
             )
-        
-        # Validate content type if provided
+
         if file.content_type:
-            content_type = file.content_type.lower()
-            
-            # Check if content type is in our allowed list
-            if content_type not in ALLOWED_FILE_TYPES:
-                # Some browsers may send different content types
-                # Allow common variations
-                if content_type in ['image/jpg', 'image/pjpeg', 'video/x-m4v']:
-                    # These are acceptable variations
-                    return
-                
-                allowed_types = ', '.join(sorted(ALLOWED_FILE_TYPES.keys()))
-                raise ValidationError(
-                    f"File content type '{content_type}' is not allowed. "
-                    f"Allowed types: {allowed_types}"
-                )
-    
+            ct = file.content_type.lower()
+            if ct not in ALLOWED_FILE_TYPES:
+                if ct not in ('image/jpg', 'image/pjpeg', 'video/x-m4v'):
+                    allowed = ', '.join(sorted(ALLOWED_FILE_TYPES.keys()))
+                    raise ValidationError(
+                        f"Content type '{ct}' is not allowed. Allowed: {allowed}"
+                    )
+
     def _get_file_extension(self, filename: str) -> str:
-        """
-        Extract file extension from filename.
-        
-        Args:
-            filename: Original filename
-            
-        Returns:
-            str: File extension including the dot (e.g., '.pdf')
-            
-        Raises:
-            ValidationError: If filename has no extension
-        """
+        """Extract lowercase extension from filename (e.g. '.mp4')."""
         if '.' not in filename:
-            raise ValidationError(
-                f"Filename '{filename}' has no extension"
+            raise ValidationError(f"Filename '{filename}' has no extension")
+        return '.' + filename.rsplit('.', 1)[1].lower()
+
+    def _run_bedrock_analysis(
+        self, file_bytes: bytes, file_type: str, filename: str
+    ) -> str:
+        """Call Bedrock analysis, returning a message on failure."""
+        if not self.bedrock_service:
+            return (
+                "Analysis unavailable: AWS Bedrock is not configured. "
+                "Please configure AWS credentials to enable AI-powered ski form analysis."
             )
-        
-        # Get extension (including the dot)
-        extension = '.' + filename.rsplit('.', 1)[1].lower()
-        return extension
+        try:
+            return self.bedrock_service.analyze_ski_form(
+                file_bytes=file_bytes,
+                file_type=file_type,
+                filename=filename,
+            )
+        except BedrockServiceError as e:
+            logger.warning(f"Bedrock analysis failed: {e}")
+            return f"Analysis unavailable: {e}"

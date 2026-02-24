@@ -94,11 +94,20 @@ export interface Document {
   id: string;
   racerId: string;
   filename: string;
+  /** S3 key in production, local path in dev */
   filePath: string;
   fileType: string;
   fileSize: number;
   analysis?: string;
+  /** "pending" while S3 upload is in progress, "complete" after Bedrock analysis */
+  status?: string;
   uploadedAt: string;
+}
+
+export interface UploadUrlResponse {
+  uploadUrl: string;
+  documentId: string;
+  s3Key: string;
 }
 
 // ============================================================================

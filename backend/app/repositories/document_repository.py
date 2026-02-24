@@ -37,7 +37,8 @@ class DocumentRepository:
         file_path: str,
         file_type: str,
         file_size: int,
-        analysis: str = None
+        analysis: str = None,
+        status: str = "complete"
     ) -> Document:
         """
         Create a new document record in the database.
@@ -62,7 +63,8 @@ class DocumentRepository:
             file_path=file_path,
             file_type=file_type,
             file_size=file_size,
-            analysis=analysis
+            analysis=analysis,
+            status=status,
         )
         
         # Add to session and commit
@@ -106,6 +108,28 @@ class DocumentRepository:
         """
         return self.db.query(Document).filter(Document.id == document_id).first()
     
+    def update(self, document_id: str, analysis: str = None, status: str = "complete") -> Optional[Document]:
+        """
+        Update the analysis and status of a document record.
+
+        Args:
+            document_id: UUID of the document to update
+            analysis: AI-generated analysis text
+            status: New status value (e.g. "complete")
+
+        Returns:
+            Document: Updated record, or None if not found
+        """
+        db_document = self.get_by_id(document_id)
+        if not db_document:
+            return None
+
+        db_document.analysis = analysis
+        db_document.status = status
+        self.db.commit()
+        self.db.refresh(db_document)
+        return db_document
+
     def delete(self, document_id: str) -> bool:
         """
         Delete a document record from the database.

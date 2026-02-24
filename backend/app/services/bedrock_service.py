@@ -7,6 +7,7 @@ to analyze ski videos and images for form feedback.
 
 import boto3
 import logging
+import os
 from typing import Optional
 from botocore.exceptions import ClientError
 
@@ -26,18 +27,18 @@ class BedrockService:
     via the Bedrock Converse API.
     """
     
-    def __init__(self, region_name: str = "us-east-1"):
+    def __init__(self, region_name: str = None):
         """
         Initialize the Bedrock service with AWS credentials.
-        
+
         Args:
-            region_name: AWS region for Bedrock service (default: us-east-1)
+            region_name: AWS region for Bedrock service (default: AWS_REGION env var or us-east-1)
         """
         try:
-            self.bedrock_client = boto3.client(
-                service_name='bedrock-runtime',
-                region_name=region_name
-            )
+            aws_profile = os.getenv("AWS_PROFILE", "default")
+            aws_region = region_name or os.getenv("AWS_REGION", "us-east-1")
+            session = boto3.Session(profile_name=aws_profile, region_name=aws_region)
+            self.bedrock_client = session.client(service_name='bedrock-runtime')
             # Model IDs for different media types
             self.claude_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"  # For images
             self.nova_model_id = "us.amazon.nova-pro-v1:0"  # For videos
@@ -47,42 +48,46 @@ class BedrockService:
     
     def analyze_ski_form(
         self,
-        file_path: str,
+        file_bytes: bytes,
         file_type: str,
         filename: str
     ) -> str:
         """
-        Analyze ski form from a video or image file using Claude.
-        
-        Sends the file to Claude Sonnet via Bedrock Converse API and requests
-        detailed feedback on ski positioning and technique.
-        
+        Analyze ski form from video or image bytes using Claude / Nova Pro.
+
         Args:
-            file_path: Path to the video or image file on disk
+            file_bytes: Raw file content read from S3
             file_type: MIME type of the file
             filename: Original filename for context
-            
+
         Returns:
             str: AI-generated analysis of ski form
-            
+
         Raises:
             BedrockServiceError: If analysis fails
         """
         import time
         start_time = time.time()
-        
+
         try:
-            # Read file content
-            logger.info(f"Reading file: {filename} ({file_type})")
-            with open(file_path, "rb") as f:
-                file_content = f.read()
-            
+            file_content = file_bytes
             file_size_mb = len(file_content) / (1024 * 1024)
-            logger.info(f"File size: {file_size_mb:.2f} MB")
-            
-            # Determine if this is a video or image
+            logger.info(f"Analyzing file: {filename} ({file_type}), size: {file_size_mb:.2f} MB")
+
+            # Enforce file size limits for inline bytes
             is_video = file_type.startswith('video/')
             is_image = file_type.startswith('image/')
+            if is_video and file_size_mb > 8:
+                raise BedrockServiceError(
+                    f"Video file is too large ({file_size_mb:.1f} MB). "
+                    "Please upload a short clip under 8 MB (approximately 10 seconds or less). "
+                    "Amazon Nova Pro's token limit is exceeded by longer videos regardless of file size."
+                )
+            if is_image and file_size_mb > 5:
+                raise BedrockServiceError(
+                    f"Image file is too large ({file_size_mb:.1f} MB). "
+                    "Please resize your image to under 5 MB and try again."
+                )
             
             if not is_video and not is_image:
                 raise BedrockServiceError(f"Unsupported file type: {file_type}")
@@ -174,6 +179,12 @@ Be constructive, specific, and encouraging in your feedback."""
                 
                 # Provide more helpful error messages
                 if error_code == 'ValidationException':
+                    if 'too long' in error_message.lower() or 'input is too long' in error_message.lower():
+                        raise BedrockServiceError(
+                            f"Video is too long for analysis ({file_size_mb:.1f} MB). "
+                            "Please upload a short clip under 8 MB (approximately 10 seconds or less). "
+                            "Amazon Nova Pro's token limit is exceeded by longer videos."
+                        )
                     if 'video' in error_message.lower() and is_video:
                         raise BedrockServiceError(
                             "Video format not supported. "
@@ -234,9 +245,6 @@ Be constructive, specific, and encouraging in your feedback."""
             error_message = e.response.get('Error', {}).get('Message', str(e))
             logger.error(f"Bedrock API error: {error_message}")
             raise BedrockServiceError(f"Failed to analyze ski form: {error_message}") from e
-        except FileNotFoundError as e:
-            logger.error(f"File not found: {file_path}")
-            raise BedrockServiceError(f"File not found: {file_path}") from e
         except Exception as e:
             elapsed_time = time.time() - start_time
             logger.error(f"Unexpected error during analysis after {elapsed_time:.1f}s: {str(e)}")
