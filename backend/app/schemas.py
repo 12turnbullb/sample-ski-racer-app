@@ -123,21 +123,12 @@ class RacerResponse(BaseModel):
 class DocumentResponse(BaseModel):
     """
     Schema for document responses.
-    
-    Represents metadata about an uploaded video/image with AI analysis.
-    
-    Attributes:
-        id: UUID primary key
-        racer_id: Foreign key to racer profile
-        filename: Original filename of uploaded file
-        file_path: Path to stored file on disk
-        file_type: MIME type of the file
-        file_size: Size of file in bytes
-        analysis: AI-generated ski form analysis
-        uploaded_at: Timestamp when file was uploaded
+
+    file_path stores an S3 key in production or a local path in dev.
+    Use GET /api/documents/{id}/url to obtain a presigned URL for viewing.
     """
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str
     racer_id: str
     filename: str
@@ -145,7 +136,28 @@ class DocumentResponse(BaseModel):
     file_type: str
     file_size: int
     analysis: Optional[str]
+    status: Optional[str]
     uploaded_at: datetime
+
+
+class UploadUrlRequest(BaseModel):
+    """Request body for POST /api/racers/{id}/documents/upload-url."""
+    filename: str = Field(..., min_length=1)
+    file_type: str = Field(..., min_length=1)
+    file_size: int = Field(..., gt=0)
+
+
+class UploadUrlResponse(BaseModel):
+    """Response for presigned PUT URL generation."""
+    upload_url: str
+    document_id: str
+    s3_key: str
+
+
+class DocumentUrlResponse(BaseModel):
+    """Response for presigned GET URL (file viewing)."""
+    url: str
+    expires_in: int
 
 
 # ============================================================================

@@ -13,6 +13,7 @@ import type {
   RacerProfileCreate,
   RacerProfileUpdate,
   Document,
+  UploadUrlResponse,
   RacingEvent,
   RacingEventCreate,
   RacingEventUpdate
@@ -336,12 +337,83 @@ export async function uploadDocument(
 }
 
 /**
+ * Step 1 of the presigned URL upload flow.
+ * Requests a presigned S3 PUT URL from the backend.
+ *
+ * @param racerId  - UUID of the racer
+ * @param filename - Original filename (used to derive S3 key extension)
+ * @param fileType - MIME type (e.g. "video/mp4")
+ * @param fileSize - File size in bytes
+ * @returns { uploadUrl, documentId, s3Key }
+ */
+export async function getUploadUrl(
+  racerId: string,
+  filename: string,
+  fileType: string,
+  fileSize: number,
+): Promise<UploadUrlResponse> {
+  const data = await apiRequest<any>(
+    `/api/racers/${racerId}/documents/upload-url`,
+    {
+      method: 'POST',
+      body: JSON.stringify({ filename, file_type: fileType, file_size: fileSize }),
+    }
+  );
+  return {
+    uploadUrl: data.upload_url,
+    documentId: data.document_id,
+    s3Key: data.s3_key,
+  };
+}
+
+/**
+ * Step 3 of the presigned URL upload flow.
+ * Triggers Bedrock analysis for a file that has already been PUT to S3.
+ *
+ * @param racerId    - UUID of the racer
+ * @param documentId - UUID returned by getUploadUrl
+ * @returns Full document record with AI analysis
+ */
+export async function analyzeDocument(
+  racerId: string,
+  documentId: string,
+): Promise<Document> {
+  const data = await apiRequest<any>(
+    `/api/racers/${racerId}/documents/${documentId}/analyze`,
+    { method: 'POST' }
+  );
+  return {
+    id: data.id,
+    racerId: data.racer_id,
+    filename: data.filename,
+    filePath: data.file_path,
+    fileType: data.file_type,
+    fileSize: data.file_size,
+    analysis: data.analysis,
+    status: data.status,
+    uploadedAt: data.uploaded_at,
+  };
+}
+
+/**
+ * Fetch a presigned S3 GET URL for viewing an uploaded file.
+ * URLs expire after 15 minutes.
+ *
+ * @param documentId - UUID of the document
+ * @returns Presigned URL string
+ */
+export async function getDocumentUrl(documentId: string): Promise<string> {
+  const data = await apiRequest<any>(`/api/documents/${documentId}/url`);
+  return data.url as string;
+}
+
+/**
  * Retrieve all documents for a racer.
- * 
+ *
  * @param racerId - UUID of the racer
  * @returns Array of document metadata, ordered by upload date (most recent first)
  * @throws ApiClientError on server error
- * 
+ *
  * Requirements: 6.2 - RESTful endpoint for document retrieval operations
  */
 export async function getDocuments(racerId: string): Promise<Document[]> {
@@ -356,6 +428,7 @@ export async function getDocuments(racerId: string): Promise<Document[]> {
     fileType: doc.file_type,
     fileSize: doc.file_size,
     analysis: doc.analysis,
+    status: doc.status,
     uploadedAt: doc.uploaded_at,
   }));
 }
@@ -509,6 +582,9 @@ export default {
   
   // Document methods
   uploadDocument,
+  getUploadUrl,
+  analyzeDocument,
+  getDocumentUrl,
   getDocuments,
   deleteDocument,
   

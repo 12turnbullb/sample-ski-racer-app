@@ -84,10 +84,11 @@ class Document(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     racer_id = Column(String, ForeignKey("racers.id", ondelete="CASCADE"), nullable=False)
     filename = Column(String, nullable=False)
-    file_path = Column(String, nullable=False)
+    file_path = Column(String, nullable=False)  # S3 key in production, local path in dev
     file_type = Column(String, nullable=False)
     file_size = Column(Integer, nullable=False)
     analysis = Column(Text, nullable=True)
+    status = Column(String, nullable=True, default="complete")  # "pending" | "complete"
     uploaded_at = Column(DateTime, nullable=False, server_default=func.now())
     
     # Relationships

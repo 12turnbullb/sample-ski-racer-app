@@ -4,17 +4,17 @@ FastAPI main application for the ski racer web app.
 This module creates and configures the FastAPI application with:
 - All API routers (racers, documents, events)
 - CORS middleware for frontend communication
-- Static file serving for uploaded media
 - Error handling middleware
 - Database initialization on startup
+- Mangum handler for AWS Lambda deployment
 
 Requirements: 6.1, 6.2, 6.3, 9.4
 """
 
+import os
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from pathlib import Path
 import logging
@@ -35,22 +35,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    Application lifespan manager.
-    
-    Handles startup and shutdown events for the FastAPI application.
-    On startup, initializes the database by creating all tables.
-    
-    Args:
-        app: FastAPI application instance
-        
-    Yields:
-        None: Control to the application
-        
-    Requirements:
-        - 7.1, 7.2, 7.3, 7.4: Initialize database on startup for data persistence
-    """
-    # Startup: Initialize database
+    """Application lifespan manager — initializes DB on startup."""
     logger.info("Starting up application...")
     try:
         init_db()
@@ -58,10 +43,9 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         raise
-    
+
     yield
-    
-    # Shutdown: Cleanup if needed
+
     logger.info("Shutting down application...")
 
 
@@ -74,49 +58,34 @@ app = FastAPI(
 )
 
 
-# Configure CORS middleware for frontend communication
-# This allows the React frontend to make requests to the backend
+# Build allowed origins — always include localhost for dev, add CloudFront domain in prod
+_allowed_origins = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:5173",
+    "http://127.0.0.1:3000",
+]
+
+_cloudfront_domain = os.getenv("CLOUDFRONT_DOMAIN", "")
+if _cloudfront_domain:
+    _allowed_origins.append(f"https://{_cloudfront_domain}")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",  # Vite default dev server
-        "http://localhost:3000",  # Alternative React dev server
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all HTTP methods (GET, POST, PUT, DELETE, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
-# Global exception handler for unhandled errors
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    """
-    Global exception handler for unhandled errors.
-    
-    Catches any unhandled exceptions and returns a standardized error response
-    with a 500 Internal Server Error status code. Logs the full error details
-    server-side but returns a generic message to the client.
-    
-    Args:
-        request: The incoming request that caused the error
-        exc: The exception that was raised
-        
-    Returns:
-        JSONResponse: Standardized error response
-        
-    Requirements:
-        - 6.7: Return 5xx status code on server error
-        - 9.4: Distinguish between client errors and server errors
-    """
+    """Catch-all handler for unhandled exceptions."""
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={
-            "detail": "An unexpected error occurred. Please try again later."
-        }
+        content={"detail": "An unexpected error occurred. Please try again later."}
     )
 
 
@@ -126,65 +95,37 @@ app.include_router(documents.router)
 app.include_router(events.router)
 
 
-# Mount static files for uploaded media
-# This allows the frontend to access uploaded images and videos
-uploads_dir = Path("uploads")
-uploads_dir.mkdir(exist_ok=True)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+# Mount local static files only when running outside Lambda (local dev)
+if not os.getenv("LAMBDA_TASK_ROOT"):
+    from fastapi.staticfiles import StaticFiles
+    uploads_dir = Path("uploads")
+    uploads_dir.mkdir(exist_ok=True)
+    app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
-# Root endpoint for health check
-@app.get(
-    "/",
-    tags=["health"],
-    summary="Health check endpoint",
-    responses={
-        200: {"description": "API is running"}
-    }
-)
+@app.get("/", tags=["health"])
 async def root() -> dict:
-    """
-    Root endpoint for health check.
-    
-    Returns a simple message indicating the API is running.
-    Useful for monitoring and verifying the backend is accessible.
-    
-    Returns:
-        dict: Status message
-    """
-    return {
-        "message": "Ski Racer Web App API",
-        "status": "running",
-        "version": "1.0.0"
-    }
+    """Health check endpoint."""
+    return {"message": "Ski Racer Web App API", "status": "running", "version": "1.0.0"}
 
 
-# API info endpoint
-@app.get(
-    "/api",
-    tags=["health"],
-    summary="API information endpoint",
-    responses={
-        200: {"description": "API information"}
-    }
-)
+@app.get("/api", tags=["health"])
 async def api_info() -> dict:
-    """
-    API information endpoint.
-    
-    Returns information about available API endpoints and their purposes.
-    
-    Returns:
-        dict: API information
-    """
+    """API information endpoint."""
     return {
         "message": "Ski Racer Web App API",
         "version": "1.0.0",
         "endpoints": {
             "racers": "/api/racers - Manage racer profiles",
             "documents": "/api/racers/{id}/documents - Upload and manage documents",
-            "events": "/api/racers/{id}/events - Manage racing events"
+            "events": "/api/racers/{id}/events - Manage racing events",
         },
-        "docs": "/docs - Interactive API documentation (Swagger UI)",
-        "redoc": "/redoc - Alternative API documentation (ReDoc)"
     }
+
+
+# Lambda handler — Mangum wraps FastAPI for API Gateway proxy integration
+try:
+    from mangum import Mangum
+    handler = Mangum(app)
+except ImportError:
+    handler = None  # Not running in Lambda
