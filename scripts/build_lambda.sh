@@ -22,12 +22,17 @@ rm -rf "$PKG_DIR"
 mkdir -p "$PKG_DIR"
 
 # Install Python dependencies into the package directory.
-# Pure-Python packages (including pg8000) are cross-platform safe — they install
-# on macOS and run on Lambda (Amazon Linux) without recompilation.
-echo "Installing Python dependencies..."
+# Use --platform to download Linux-compatible wheels (manylinux2014_x86_64)
+# so compiled extensions like pydantic_core work on Lambda (Amazon Linux x86_64)
+# even when building from macOS. --only-binary=:all: ensures no source compilation.
+echo "Installing Python dependencies (targeting linux/amd64)..."
 python3 -m pip install \
   -r "$BACKEND_DIR/requirements.txt" \
   -t "$PKG_DIR" \
+  --platform manylinux2014_x86_64 \
+  --implementation cp \
+  --python-version 312 \
+  --only-binary=:all: \
   --quiet \
   --upgrade
 
@@ -35,9 +40,10 @@ python3 -m pip install \
 echo "Copying app source..."
 cp -r "$BACKEND_DIR/app" "$PKG_DIR/"
 
-# Remove unwanted files to keep the zip lean
+# Remove unwanted files to keep the zip lean.
+# Note: .dist-info directories are intentionally kept — pg8000's scramp dependency
+# uses importlib.metadata at runtime and will fail with ImportModuleError if removed.
 find "$PKG_DIR" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
-find "$PKG_DIR" -type d -name "*.dist-info" -exec rm -rf {} + 2>/dev/null || true
 find "$PKG_DIR" -name "*.pyc" -delete 2>/dev/null || true
 
 SIZE=$(du -sh "$PKG_DIR" | cut -f1)

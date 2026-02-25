@@ -7,7 +7,21 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Futuristic ski racing palette
+        // Team USA palette
+        'usa-red': {
+          DEFAULT: '#d31118',
+          dark: '#7f0a0e',
+          darker: '#3f0507',
+          light: '#f2b8ba',
+          muted: '#a6192e',
+        },
+        'usa-navy': {
+          DEFAULT: '#171fbe',
+          dark: '#050626',
+          light: '#c2deff',
+          medium: '#4264d0',
+        },
+        // Retained for backwards compatibility (used in backgrounds/cards)
         ice: {
           50: '#f0f9ff',
           100: '#e0f2fe',
@@ -41,20 +55,29 @@ export default {
           950: '#020617',
         },
       },
+      fontFamily: {
+        'barlow': ['Barlow', 'system-ui', 'sans-serif'],
+        'barlow-condensed': ['Barlow Condensed', 'system-ui', 'sans-serif'],
+      },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-conic': 'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-        'gradient-speed': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        'gradient-ice': 'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #8b5cf6 100%)',
+        // Team USA primary gradient: red to navy
+        'gradient-primary': 'linear-gradient(135deg, #d31118 0%, #4264d0 100%)',
+        // Keep gradient-ice for any components still using it
+        'gradient-ice': 'linear-gradient(135deg, #d31118 0%, #4264d0 100%)',
         'gradient-carbon': 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-        'mesh-gradient': 'radial-gradient(at 40% 20%, hsla(210, 100%, 50%, 0.3) 0px, transparent 50%), radial-gradient(at 80% 0%, hsla(189, 100%, 56%, 0.3) 0px, transparent 50%), radial-gradient(at 0% 50%, hsla(355, 100%, 93%, 0.3) 0px, transparent 50%), radial-gradient(at 80% 50%, hsla(340, 100%, 76%, 0.3) 0px, transparent 50%), radial-gradient(at 0% 100%, hsla(22, 100%, 77%, 0.3) 0px, transparent 50%), radial-gradient(at 80% 100%, hsla(242, 100%, 70%, 0.3) 0px, transparent 50%), radial-gradient(at 0% 0%, hsla(343, 100%, 76%, 0.3) 0px, transparent 50%)',
       },
       boxShadow: {
-        'neon': '0 0 20px rgba(0, 255, 255, 0.5)',
-        'neon-blue': '0 0 20px rgba(0, 128, 255, 0.5)',
+        // Team USA glow shadows
+        'usa-red': '0 0 20px rgba(211, 17, 24, 0.5)',
+        'usa-navy': '0 0 20px rgba(66, 100, 208, 0.4)',
+        // Keep old names mapped to new colors for backwards compat
+        'neon': '0 0 20px rgba(211, 17, 24, 0.5)',
+        'neon-blue': '0 0 20px rgba(66, 100, 208, 0.4)',
         'neon-purple': '0 0 20px rgba(139, 92, 246, 0.5)',
-        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
-        'inner-glow': 'inset 0 0 20px rgba(255, 255, 255, 0.1)',
+        'glass': '0 8px 32px 0 rgba(0, 0, 0, 0.4)',
+        'inner-glow': 'inset 0 0 20px rgba(255, 255, 255, 0.05)',
       },
       backdropBlur: {
         xs: '2px',
@@ -69,16 +92,16 @@ export default {
           '100%': { transform: 'translateX(0)', opacity: '1' },
         },
         'slide-in-up': {
-          '0%': { transform: 'translateY(100%)', opacity: '0' },
+          '0%': { transform: 'translateY(20px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         'fadeIn': {
-          '0%': { opacity: '0', transform: 'scale(0.95)' },
+          '0%': { opacity: '0', transform: 'scale(0.97)' },
           '100%': { opacity: '1', transform: 'scale(1)' },
         },
         'pulse-glow': {
-          '0%, 100%': { boxShadow: '0 0 20px rgba(0, 255, 255, 0.3)' },
-          '50%': { boxShadow: '0 0 40px rgba(0, 255, 255, 0.6)' },
+          '0%, 100%': { boxShadow: '0 0 20px rgba(211, 17, 24, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(211, 17, 24, 0.6)' },
         },
         'shimmer': {
           '0%': { backgroundPosition: '-1000px 0' },
@@ -86,23 +109,17 @@ export default {
         },
         'float': {
           '0%, 100%': { transform: 'translateY(0px)' },
-          '50%': { transform: 'translateY(-10px)' },
-        },
-        'speed-line': {
-          '0%': { transform: 'translateX(-100%) scaleX(0)', opacity: '0' },
-          '50%': { opacity: '1' },
-          '100%': { transform: 'translateX(100%) scaleX(1)', opacity: '0' },
+          '50%': { transform: 'translateY(-6px)' },
         },
       },
       animation: {
         'slide-in-right': 'slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
         'slide-in-left': 'slide-in-left 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        'slide-in-up': 'slide-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-        'fadeIn': 'fadeIn 0.3s ease-out',
+        'slide-in-up': 'slide-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+        'fadeIn': 'fadeIn 0.25s ease-out',
         'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
         'shimmer': 'shimmer 3s linear infinite',
         'float': 'float 3s ease-in-out infinite',
-        'speed-line': 'speed-line 1.5s ease-in-out infinite',
       },
     },
   },

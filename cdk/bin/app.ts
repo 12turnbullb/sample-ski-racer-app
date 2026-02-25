@@ -34,6 +34,5 @@ const apiStack = new ApiStack(app, 'ApiStack', {
 
 new FrontendStack(app, 'FrontendStack', {
   env,
-  frontendBucket: storageStack.frontendBucket,
   apiUrl: apiStack.apiUrl,
 });
