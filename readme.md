@@ -1,293 +1,266 @@
-# Beek Racing - Ski Racer Web App
+# Beek Racing — Ski Racer Management Platform
 
-A full-stack web application for ski racers to manage their profile, track racing events, and analyze ski run videos and images using AI.
+A full-stack web application for managing ski racer profiles, uploading training footage for AI-powered form analysis, and tracking race calendar events.
+
+---
 
 ## Overview
 
-Beek Racing provides ski racers with a centralized platform to:
+Beek Racing provides a single-racer dashboard with four views:
 
-- Maintain a detailed **racer profile** (height, weight, ski types, binding measurements, personal records, goals)
-- Upload and **analyze ski run videos and images** using AWS Bedrock AI
-- Track **racing events** on an interactive calendar
-- View an **overview dashboard** summarizing upcoming events and profile stats
+| View | Description |
+|------|-------------|
+| **Home** | Dashboard overview — profile summary and upcoming events |
+| **Profile** | Racer details: height, weight, ski types, binding measurements, personal records, racing goals |
+| **Analyze** | Upload ski videos or images; AWS Bedrock analyzes ski form and returns coaching feedback |
+| **Calendar** | Race event management with a monthly grid view and a list view |
 
-## Tech Stack
+---
+
+## Architecture
+
+```
+Browser → CloudFront → S3 (frontend static assets)
+                    → API Gateway → Lambda (FastAPI/Mangum) → Aurora PostgreSQL
+                                                             → S3 (media uploads)
+                                                             → AWS Bedrock (AI analysis)
+```
 
 ### Frontend
+- React 19, TypeScript, Vite
+- Tailwind CSS v4
+- React Router v7
+- Vitest + Testing Library
 
-| Technology | Version | Purpose |
-|---|---|---|
-| React | 19.x | UI framework |
-| TypeScript | 5.9.x | Type safety |
-| Vite | 7.x | Build tool & dev server |
-| React Router | 7.x | Client-side routing |
-| Tailwind CSS | 4.x | Styling |
-| React Markdown | 10.x | Rendering AI analysis output |
-| Vitest | 4.x | Unit testing |
+### Backend
+- Python 3.12, FastAPI, SQLAlchemy 2, Pydantic v2
+- Mangum adapter for AWS Lambda
+- pg8000 PostgreSQL driver (pure Python — no native deps)
+- SQLite for local development (automatic fallback)
+
+### Infrastructure (AWS CDK — TypeScript)
+Five CDK stacks in `cdk/`:
+
+| Stack | Resources |
+|-------|-----------|
+| `NetworkStack` | VPC, subnets, security groups |
+| `DatabaseStack` | Aurora PostgreSQL Serverless v2, Secrets Manager credential |
+| `StorageStack` | S3 bucket for media uploads |
+| `ApiStack` | Lambda function, API Gateway HTTP API |
+| `FrontendStack` | S3 bucket for static assets, CloudFront distribution |
+
+---
+
+## Local Development
+
+### Prerequisites
+- Python 3.12+
+- Node.js 20+
+- AWS CLI (optional — only needed for S3/Bedrock features locally)
 
 ### Backend
 
-| Technology | Version | Purpose |
-|---|---|---|
-| Python | 3.8+ | Runtime |
-| FastAPI | 0.115.x | REST API framework |
-| SQLAlchemy | 2.0.x | ORM / database access |
-| SQLite | — | Local database |
-| Pydantic | 2.9.x | Request/response validation |
-| Uvicorn | 0.32.x | ASGI server |
-| boto3 | latest | AWS Bedrock AI integration |
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate      # Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+The API starts at `http://localhost:8000`. Swagger docs at `http://localhost:8000/docs`.
+
+Without `DATABASE_URL` or `DB_SECRET_ARN` set, the backend automatically uses a local SQLite database at `backend/data/ski_racer.db`.
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The app starts at `http://localhost:5173` and proxies API requests to the backend.
+
+**Environment variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_API_BASE_URL` | Backend base URL (defaults to `http://localhost:8000` in dev) |
+
+---
+
+## API Reference
+
+Base path: `/api`
+
+### Health
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Health check |
+
+### Racers
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/racers/{id}` | Get racer profile |
+| `POST` | `/api/racers` | Create racer profile |
+| `PUT` | `/api/racers/{id}` | Update racer profile |
+| `DELETE` | `/api/racers/{id}` | Delete racer profile |
+
+### Documents (Upload & Analysis)
+| Method | Path | Description |
+|--------|------|-------------|
+| `POST` | `/api/racers/{id}/documents/upload-url` | Get presigned S3 PUT URL (production) |
+| `POST` | `/api/racers/{id}/documents/{doc_id}/analyze` | Run Bedrock AI analysis on uploaded file |
+| `GET` | `/api/racers/{id}/documents` | List all documents for a racer |
+| `GET` | `/api/documents/{doc_id}` | Get single document |
+| `GET` | `/api/documents/{doc_id}/url` | Get presigned S3 GET URL for media viewing |
+| `DELETE` | `/api/documents/{doc_id}` | Delete document and S3 object |
+| `POST` | `/api/racers/{id}/documents` | Single-step multipart upload (local dev only) |
+
+### Events
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/racers/{id}/events` | List events |
+| `POST` | `/api/racers/{id}/events` | Create event |
+| `PUT` | `/api/events/{id}` | Update event |
+| `DELETE` | `/api/events/{id}` | Delete event |
+
+---
+
+## Data Models
+
+**Racer** — `racer_name`, `height` (cm), `weight` (kg), `ski_types`, `binding_measurements`, `personal_records`, `racing_goals`
+
+**Document** — `filename`, `file_path` (S3 key in prod / local path in dev), `file_type`, `file_size`, `analysis` (Bedrock output), `status` (`pending` | `complete`)
+
+**Event** — `event_name`, `event_date`, `location`, `notes`
+
+---
+
+## Document Upload Flow (Production)
+
+1. **Frontend** → `POST /api/racers/{id}/documents/upload-url` with filename, type, size
+2. **Backend** creates a `pending` DB record and returns a presigned S3 PUT URL
+3. **Frontend** → `PUT <presigned-url>` — uploads the file directly to S3
+4. **Frontend** → `POST /api/racers/{id}/documents/{doc_id}/analyze`
+5. **Backend** reads file from S3, calls AWS Bedrock, updates record to `complete`, returns analysis
+
+---
+
+## Testing
+
+```bash
+# Frontend
+cd frontend
+npm test                  # run tests
+npm run test:coverage     # with coverage report
+npm run test:ui           # Vitest browser UI
+
+# Backend
+cd backend
+source venv/bin/activate
+pytest
+```
+
+---
+
+## AWS Deployment
+
+### Prerequisites
+- AWS CLI configured with appropriate permissions
+- Node.js (for CDK)
+- CDK bootstrapped: `npx cdk bootstrap aws://684069405823/us-east-1`
+
+### Build and deploy
+
+```bash
+# 1. Build the Lambda package (Linux ELF wheels — required for pydantic_core on Lambda)
+./scripts/build_lambda.sh
+
+# 2. Deploy backend infrastructure
+cd cdk
+npx cdk deploy ApiStack
+
+# 3. Build and deploy frontend
+cd ../frontend
+npm run build
+aws s3 sync dist/ s3://ski-app-frontend-684069405823-us-east-1/ --delete
+aws cloudfront create-invalidation --distribution-id E2937UB6FM1NLL --paths "/*"
+```
+
+### Deploy all stacks (first time)
+
+```bash
+cd cdk
+npx cdk deploy --all
+```
+
+### Live endpoints
+
+| Resource | URL |
+|----------|-----|
+| Frontend | `https://d15vamwn6ru4nt.cloudfront.net` |
+| API Gateway | `https://2xijxzzrm7.execute-api.us-east-1.amazonaws.com` |
+
+### AWS resources
+
+| Resource | Name / ARN |
+|----------|-----------|
+| AWS Account | `684069405823` (us-east-1) |
+| Lambda | `ApiStack-SkiAppFunction73E938A9-p0cOfKjEuAgK` |
+| CloudFront Distribution | `E2937UB6FM1NLL` |
+| Uploads Bucket | `ski-app-uploads-684069405823-us-east-1` |
+| Frontend Bucket | `ski-app-frontend-684069405823-us-east-1` |
+| DB Secret ARN | `arn:aws:secretsmanager:us-east-1:684069405823:secret:ski-app/db-credentials-rf465n` |
+
+### Lambda build notes
+
+`scripts/build_lambda.sh` installs dependencies targeting `manylinux2014_x86_64` / Python 3.12 so compiled extensions (pydantic_core, etc.) run on Amazon Linux. `.dist-info` directories are intentionally preserved — pg8000's `scramp` dependency uses `importlib.metadata` at runtime.
+
+Run the build script before every `cdk deploy ApiStack`.
+
+---
 
 ## Project Structure
 
 ```
-sample-ski-racer-app/
-├── readme.md                    # This file
-├── AWS_MIGRATION_STRATEGY.md    # Guide for migrating to AWS
-├── backend/                     # FastAPI backend
+ski-app-sample/
+├── frontend/               # React + Vite app
+│   ├── src/
+│   │   ├── components/     # UI components (Overview, ProfileForm, DocumentUploader, Calendar, …)
+│   │   ├── services/       # API client
+│   │   └── types/          # TypeScript types
+│   ├── tailwind.config.js  # Custom Tailwind tokens (usa-red, carbon-*, etc.)
+│   └── .env.production     # VITE_API_BASE_URL for production build
+├── backend/
 │   ├── app/
-│   │   ├── main.py              # FastAPI app, CORS config
-│   │   ├── database.py          # SQLAlchemy engine & session
-│   │   ├── models.py            # SQLAlchemy ORM models
-│   │   ├── schemas.py           # Pydantic request/response schemas
-│   │   ├── routers/             # API route handlers
-│   │   │   ├── racers.py
-│   │   │   ├── documents.py
-│   │   │   └── events.py
-│   │   ├── services/            # Business logic
-│   │   │   ├── racer_service.py
-│   │   │   ├── document_service.py
-│   │   │   └── event_service.py
-│   │   └── repositories/        # Data access layer
-│   │       ├── racer_repository.py
-│   │       ├── document_repository.py
-│   │       └── event_repository.py
-│   ├── tests/unit/              # Backend unit tests (pytest)
-│   ├── data/                    # SQLite database (auto-created)
-│   ├── uploads/                 # Uploaded files (auto-created)
+│   │   ├── main.py         # FastAPI app + Mangum Lambda handler
+│   │   ├── database.py     # SQLAlchemy engine (SQLite dev / Aurora prod)
+│   │   ├── models.py       # ORM models: Racer, Document, Event
+│   │   ├── schemas.py      # Pydantic request/response schemas
+│   │   ├── routers/        # FastAPI routers: racers, documents, events
+│   │   ├── repositories/   # DB query layer
+│   │   └── services/       # Business logic + Bedrock / S3 integration
 │   ├── requirements.txt
-│   └── README.md                # Backend-specific setup docs
-└── frontend/                    # React/TypeScript frontend
-    ├── src/
-    │   ├── App.tsx              # Root component & routing
-    │   ├── components/          # UI components
-    │   │   ├── Overview.tsx     # Home dashboard
-    │   │   ├── ProfileForm.tsx  # Edit racer profile
-    │   │   ├── ProfileView.tsx  # View racer profile
-    │   │   ├── DocumentUploader.tsx
-    │   │   ├── VideoAnalysisViewer.tsx
-    │   │   ├── Calendar.tsx     # List view of events
-    │   │   ├── CalendarGrid.tsx # Monthly grid view
-    │   │   ├── EventForm.tsx    # Create/edit events
-    │   │   ├── Toast.tsx        # Notification system
-    │   │   ├── ConfirmDialog.tsx
-    │   │   └── ErrorBoundary.tsx
-    │   ├── services/
-    │   │   └── api.ts           # API client (fetch wrapper)
-    │   └── types/               # Shared TypeScript types
-    ├── package.json
-    └── README.md                # Frontend-specific Vite docs
+│   └── lambda_pkg/         # Built by scripts/build_lambda.sh (CDK asset)
+├── cdk/                    # AWS CDK infrastructure (TypeScript)
+│   └── lib/                # NetworkStack, DatabaseStack, StorageStack, ApiStack, FrontendStack
+└── scripts/
+    ├── build_lambda.sh     # Builds Linux-compatible Lambda zip
+    └── migrate_sqlite_to_aurora.py
 ```
 
-## Getting Started
+---
 
-### Prerequisites
+## Design System
 
-- Node.js 18+ and npm
-- Python 3.8+
+The UI uses a **Team USA dark theme** — carbon/navy backgrounds with red and navy accents.
 
-### 1. Backend Setup
+- Font: [Barlow Condensed](https://fonts.google.com/specimen/Barlow+Condensed) (headings, uppercase bold)
+- Primary color: `usa-red` (`#d31118`)
+- Accent: `usa-navy-medium` (`#4264d0`)
+- Backgrounds: `carbon-*` dark scale
+- Utility classes: `glass-dark`, `glass`, `gradient-text`, `btn-primary`, `card-hover`
 
-```bash
-cd backend
-
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate      # macOS/Linux
-# venv\Scripts\activate       # Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Start the development server (auto-reloads on changes)
-uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-```
-
-The SQLite database and uploads directory are created automatically on first run.
-
-Backend URLs:
-- API base: `http://127.0.0.1:8000`
-- Swagger docs: `http://127.0.0.1:8000/docs`
-- ReDoc: `http://127.0.0.1:8000/redoc`
-
-### 2. Frontend Setup
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
-```
-
-Frontend runs at `http://localhost:5173` by default.
-
-## Features
-
-### Racer Profile
-- Create and edit a single racer profile per browser session (stored in `localStorage`)
-- Fields: name, height, weight, ski types, binding measurements, personal records, racing goals
-- Profile persists across page reloads; a default profile is created automatically on first visit
-
-### Video & Image Analysis (Analyze tab)
-- Upload video files or images of ski runs
-- Supported formats: PDF, Word (.doc/.docx), JPG/JPEG, PNG — max 10MB per file
-- Files are sent to **AWS Bedrock** for AI-powered analysis
-- Analysis results are displayed in formatted markdown
-
-### Racing Events Calendar
-- Create, edit, and delete racing events
-- Two view modes: **monthly grid** and **chronological list**
-- Events are sorted chronologically
-- Confirm dialog before deletion to prevent accidents
-
-### Overview Dashboard
-- Summarizes the racer's profile and upcoming events
-- Refreshes automatically when navigating back to the home page
-
-## API Reference
-
-### Racer Profiles
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/racers` | Create a racer profile |
-| `GET` | `/api/racers` | List all racers |
-| `GET` | `/api/racers/{id}` | Get a racer by ID |
-| `PUT` | `/api/racers/{id}` | Update a racer |
-| `DELETE` | `/api/racers/{id}` | Delete a racer |
-
-### Documents
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/racers/{id}/documents` | Upload a document |
-| `GET` | `/api/racers/{id}/documents` | List documents for a racer |
-| `GET` | `/api/documents/{id}` | Get a document by ID |
-| `DELETE` | `/api/documents/{id}` | Delete a document |
-
-### Racing Events
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `POST` | `/api/racers/{id}/events` | Create an event |
-| `GET` | `/api/racers/{id}/events` | List events for a racer |
-| `PUT` | `/api/events/{id}` | Update an event |
-| `DELETE` | `/api/events/{id}` | Delete an event |
-
-### Health
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Root health check |
-| `GET` | `/api` | API info |
-
-All error responses include a `detail` field with a descriptive message. HTTP status codes follow standard conventions (200/201 for success, 400/404/422 for client errors, 500 for server errors).
-
-## Running Tests
-
-### Backend
-
-```bash
-cd backend
-source venv/bin/activate
-
-# Run all tests
-pytest
-
-# Run with verbose output
-pytest -v
-
-# Run with coverage report
-pytest --cov=app --cov-report=html
-
-# Run specific test files
-pytest tests/unit/test_racer_routes.py -v
-pytest tests/unit/test_document_routes.py -v
-pytest tests/unit/test_event_routes.py -v
-```
-
-### Frontend
-
-```bash
-cd frontend
-
-# Run tests
-npm test
-
-# Run with UI
-npm run test:ui
-
-# Run with coverage
-npm run test:coverage
-```
-
-## Configuration
-
-### CORS
-
-The backend allows requests from these origins by default (edit `app/main.py` to change):
-
-- `http://localhost:5173`
-- `http://localhost:3000`
-- `http://127.0.0.1:5173`
-- `http://127.0.0.1:3000`
-
-### Frontend API URL
-
-The frontend uses a `VITE_API_URL` environment variable to locate the backend. Create a `.env` file in the `frontend/` directory:
-
-```
-VITE_API_URL=http://127.0.0.1:8000
-```
-
-If not set, it defaults to `http://127.0.0.1:8000`.
-
-### AWS Bedrock (AI Analysis)
-
-The document/video analysis feature requires AWS credentials with Bedrock access. Set the standard AWS environment variables before starting the backend:
-
-```bash
-export AWS_ACCESS_KEY_ID=your-key
-export AWS_SECRET_ACCESS_KEY=your-secret
-export AWS_DEFAULT_REGION=us-east-1
-```
-
-## Deployment
-
-For deploying to AWS, see [AWS_MIGRATION_STRATEGY.md](./AWS_MIGRATION_STRATEGY.md). It covers two recommended approaches:
-
-- **Serverless** (API Gateway + Lambda + Aurora Serverless + S3 + Amplify) — best for variable traffic
-- **Container-based** (ECS Fargate + RDS + S3 + Amplify) — best for consistent workloads
-
-## Troubleshooting
-
-**Backend won't start / import errors**
-- Ensure the virtual environment is activated: `source venv/bin/activate`
-- Reinstall dependencies: `pip install -r requirements.txt`
-- Run commands from inside the `backend/` directory
-
-**"Database is locked" error**
-- Only one backend instance can run at a time
-- Close any SQLite browser tools that may have the file open
-
-**Port already in use**
-```bash
-uvicorn app.main:app --reload --port 8001
-```
-
-**Frontend can't reach the backend**
-- Confirm the backend is running on port 8000
-- Check that `VITE_API_URL` points to the correct address
-- Verify CORS origins in `app/main.py` include your frontend URL
+See `frontend/DESIGN_SYSTEM.md` for full token reference.
