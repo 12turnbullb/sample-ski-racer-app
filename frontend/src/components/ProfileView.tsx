@@ -76,25 +76,25 @@ export default function ProfileView({ profile, onEdit, onDelete }: ProfileViewPr
 
   return (
     <>
-      <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-md">
+      <div className="max-w-4xl mx-auto p-6 glass-dark rounded-2xl shadow-glass border border-white/10">
         {/* Header with title and action buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">Racer Profile</h2>
-            <p className="text-lg text-gray-600 mt-1">{profile.racerName}</p>
+            <h2 className="text-3xl font-barlow-condensed font-bold uppercase gradient-text">Racer Profile</h2>
+            <p className="text-lg text-gray-300 mt-1">{profile.racerName}</p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={onEdit}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="btn-primary px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900"
             >
               Edit Profile
             </button>
             <button
               onClick={handleDeleteClick}
-              className="px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+              className="px-5 py-2.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-full font-bold uppercase tracking-wide text-sm hover:bg-red-500/30 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-carbon-900 transition-all"
             >
-              Delete Profile
+              Delete
             </button>
           </div>
         </div>
@@ -102,70 +102,70 @@ export default function ProfileView({ profile, onEdit, onDelete }: ProfileViewPr
         {/* Profile data grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Physical Measurements Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+          <div className="glass rounded-xl p-5 border border-white/10 space-y-4">
+            <h3 className="text-xs font-bold text-usa-red/70 uppercase tracking-widest border-b border-white/10 pb-3">
               Physical Measurements
             </h3>
 
             {/* Height */}
             <div>
-              <dt className="text-sm font-medium text-gray-500">Height</dt>
-              <dd className="mt-1 text-base text-gray-900">
-                {profile.height.toFixed(1)} cm
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">Height</dt>
+              <dd className="mt-1 text-xl font-semibold text-white">
+                {profile.height.toFixed(1)} <span className="text-gray-500 text-base font-normal">cm</span>
               </dd>
             </div>
 
             {/* Weight */}
             <div>
-              <dt className="text-sm font-medium text-gray-500">Weight</dt>
-              <dd className="mt-1 text-base text-gray-900">
-                {profile.weight.toFixed(1)} kg
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">Weight</dt>
+              <dd className="mt-1 text-xl font-semibold text-white">
+                {profile.weight.toFixed(1)} <span className="text-gray-500 text-base font-normal">kg</span>
               </dd>
             </div>
           </div>
 
           {/* Equipment Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+          <div className="glass rounded-xl p-5 border border-white/10 space-y-4">
+            <h3 className="text-xs font-bold text-usa-red/70 uppercase tracking-widest border-b border-white/10 pb-3">
               Equipment
             </h3>
 
             {/* Ski Types */}
             <div>
-              <dt className="text-sm font-medium text-gray-500">Ski Types</dt>
-              <dd className="mt-1 text-base text-gray-900 break-words">
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">Ski Types</dt>
+              <dd className="mt-1 text-base text-white break-words">
                 {profile.skiTypes}
               </dd>
             </div>
 
             {/* Binding Measurements */}
             <div>
-              <dt className="text-sm font-medium text-gray-500">Binding Measurements</dt>
-              <dd className="mt-1 text-base text-gray-900 whitespace-pre-wrap break-words">
+              <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">Binding Measurements</dt>
+              <dd className="mt-1 text-base text-white whitespace-pre-wrap break-words">
                 {profile.bindingMeasurements}
               </dd>
             </div>
           </div>
 
           {/* Personal Records Section */}
-          <div className="space-y-4 md:col-span-2">
-            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+          <div className="glass rounded-xl p-5 border border-white/10 space-y-4 md:col-span-2">
+            <h3 className="text-xs font-bold text-usa-red/70 uppercase tracking-widest border-b border-white/10 pb-3">
               Personal Records
             </h3>
             <div>
-              <dd className="text-base text-gray-900 whitespace-pre-wrap break-words">
+              <dd className="text-base text-white whitespace-pre-wrap break-words leading-relaxed">
                 {profile.personalRecords}
               </dd>
             </div>
           </div>
 
           {/* Racing Goals Section */}
-          <div className="space-y-4 md:col-span-2">
-            <h3 className="text-lg font-semibold text-gray-700 border-b pb-2">
+          <div className="glass rounded-xl p-5 border border-white/10 space-y-4 md:col-span-2">
+            <h3 className="text-xs font-bold text-usa-red/70 uppercase tracking-widest border-b border-white/10 pb-3">
               Racing Goals
             </h3>
             <div>
-              <dd className="text-base text-gray-900 whitespace-pre-wrap break-words">
+              <dd className="text-base text-white whitespace-pre-wrap break-words leading-relaxed">
                 {profile.racingGoals}
               </dd>
             </div>
@@ -173,13 +173,13 @@ export default function ProfileView({ profile, onEdit, onDelete }: ProfileViewPr
         </div>
 
         {/* Metadata footer */}
-        <div className="mt-8 pt-6 border-t border-gray-200">
-          <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-sm text-gray-500">
+        <div className="mt-8 pt-6 border-t border-white/10">
+          <div className="flex flex-col sm:flex-row sm:justify-between gap-2 text-xs text-gray-500">
             <div>
-              <span className="font-medium">Created:</span> {formatDate(profile.createdAt)}
+              <span className="font-medium text-gray-400">Created:</span> {formatDate(profile.createdAt)}
             </div>
             <div>
-              <span className="font-medium">Last Updated:</span> {formatDate(profile.updatedAt)}
+              <span className="font-medium text-gray-400">Last Updated:</span> {formatDate(profile.updatedAt)}
             </div>
           </div>
         </div>

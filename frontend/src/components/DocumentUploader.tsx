@@ -306,7 +306,7 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
 
   return (
     <div className="w-full max-w-2xl mx-auto p-4">
-      <h2 className="text-2xl font-bold gradient-text mb-4">
+      <h2 className="text-2xl font-barlow-condensed font-bold uppercase gradient-text mb-4">
         Upload Ski Video or Image
       </h2>
 
@@ -316,8 +316,8 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
           relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer
           transition-all duration-200
           ${isDragging
-            ? 'border-neon-cyan bg-ice-500/10 shadow-neon'
-            : 'border-white/20 bg-white/5 hover:border-ice-400/40 hover:bg-white/10'
+            ? 'border-usa-red bg-usa-red/10 shadow-usa-red'
+            : 'border-white/20 bg-white/5 hover:border-usa-red/30 hover:bg-white/10'
           }
           ${isUploading ? 'pointer-events-none opacity-50' : ''}
         `}
@@ -338,7 +338,7 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
 
         <div className="mb-4">
           <svg
-            className="mx-auto h-12 w-12 text-ice-400"
+            className="mx-auto h-12 w-12 text-usa-red/60"
             stroke="currentColor"
             fill="none"
             viewBox="0 0 48 48"
@@ -353,20 +353,20 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
           </svg>
         </div>
 
-        <div className="text-sm text-ice-300">
+        <div className="text-sm text-gray-300">
           <p className="font-medium text-white">
             {isDragging
               ? 'Drop file here'
               : 'Drag and drop a video or image here, or click to select'}
           </p>
-          <p className="mt-2 text-xs text-ice-400">
+          <p className="mt-2 text-xs text-gray-500">
             Supported formats: {ALLOWED_EXTENSIONS.join(', ')}
           </p>
-          <p className="text-xs text-ice-400">Maximum file size: 50 MB</p>
-          <p className="mt-2 text-xs text-neon-cyan font-medium">
+          <p className="text-xs text-gray-500">Maximum file size: 50 MB</p>
+          <p className="mt-2 text-xs text-usa-red font-medium">
             AI will analyze your ski form and provide feedback
           </p>
-          <p className="mt-1 text-xs text-ice-500">
+          <p className="mt-1 text-xs text-gray-600">
             💡 Tip: Images process in ~10–30s, videos may take 30–120s
           </p>
         </div>
@@ -378,7 +378,7 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               <div className="flex-shrink-0">
-                <svg className="h-8 w-8 text-ice-400" fill="currentColor" viewBox="0 0 20 20">
+                <svg className="h-8 w-8 text-usa-navy-medium/70" fill="currentColor" viewBox="0 0 20 20">
                   <path
                     fillRule="evenodd"
                     d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"
@@ -388,7 +388,7 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">{selectedFile.name}</p>
-                <p className="text-xs text-ice-400">
+                <p className="text-xs text-gray-500">
                   {formatFileSize(selectedFile.size)}
                   {selectedFile.type.startsWith('video/') &&
                     ` • Est. ${Math.ceil(Math.max(30, Math.min(120, (selectedFile.size / (1024 * 1024)) * 5)))}s to analyze`
@@ -399,7 +399,7 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
             {!isUploading && (
               <button
                 onClick={(e) => { e.stopPropagation(); handleClear(); }}
-                className="ml-4 flex-shrink-0 text-ice-500 hover:text-white transition-colors"
+                className="ml-4 flex-shrink-0 text-gray-500 hover:text-white transition-colors"
                 aria-label="Clear file"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
@@ -424,17 +424,17 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
       {isUploading && uploadProgress > 0 && (
         <div className="mt-4">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-sm font-medium text-ice-200">{uploadStatus}</span>
-            <span className="text-sm font-medium text-ice-200">{uploadProgress}%</span>
+            <span className="text-sm font-medium text-gray-300">{uploadStatus}</span>
+            <span className="text-sm font-medium text-gray-300">{uploadProgress}%</span>
           </div>
           <div className="w-full bg-white/10 rounded-full h-2">
             <div
-              className="bg-gradient-ice h-2 rounded-full transition-all duration-300"
+              className="bg-usa-red h-2 rounded-full transition-all duration-300"
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
           {uploadProgress > 62 && uploadProgress < 92 && (
-            <p className="text-xs text-ice-500 mt-2">
+            <p className="text-xs text-gray-500 mt-2">
               AI is analyzing your ski form. This process cannot be interrupted.
             </p>
           )}
@@ -482,8 +482,8 @@ export default function DocumentUploader({ racerId, onUploadComplete }: Document
             w-full py-3 px-4 rounded-xl font-semibold text-white
             transition-all duration-200
             ${!selectedFile || isUploading
-              ? 'bg-white/10 cursor-not-allowed text-ice-500'
-              : 'bg-gradient-ice hover:shadow-neon-blue'
+              ? 'bg-white/10 cursor-not-allowed text-gray-500 rounded-full'
+              : 'btn-primary'
             }
           `}
         >

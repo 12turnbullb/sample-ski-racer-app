@@ -78,12 +78,12 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
       // Default fallback UI
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="max-w-md w-full glass-dark border border-white/10 rounded-2xl shadow-glass p-8">
             <div className="text-center">
               {/* Error icon */}
               <svg
-                className="mx-auto h-12 w-12 text-red-500 mb-4"
+                className="mx-auto h-12 w-12 text-red-400 mb-4"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -97,17 +97,17 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
               </svg>
 
               {/* Error message */}
-              <h2 className="text-xl font-bold text-gray-900 mb-2">
+              <h2 className="text-xl font-bold text-white mb-2">
                 Something went wrong
               </h2>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-300 mb-4">
                 An unexpected error occurred. Please try again.
               </p>
 
               {/* Error details (in development) */}
               {import.meta.env.DEV && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded text-left">
-                  <p className="text-sm font-mono text-red-800 break-all">
+                <div className="mb-4 p-3 glass border border-red-500/30 rounded-xl text-left">
+                  <p className="text-sm font-mono text-red-400 break-all">
                     {this.state.error.message}
                   </p>
                 </div>
@@ -116,7 +116,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
               {/* Retry button */}
               <button
                 onClick={this.resetError}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                className="btn-primary px-6 py-3 focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900"
               >
                 Try Again
               </button>

@@ -1,17 +1,23 @@
 @import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;800&family=Barlow:wght@400;500;600&display=swap');
 
 /* ============================================================================
-   FUTURISTIC SKI RACING THEME
+   SKI RACING APP — TEAM USA DARK THEME
    ============================================================================ */
 
 /* Root Variables */
 :root {
-  --color-ice-primary: #0ea5e9;
-  --color-ice-secondary: #06b6d4;
-  --color-neon-cyan: #00ffff;
-  --color-neon-blue: #0080ff;
+  --color-usa-red: #d31118;
+  --color-usa-red-dark: #7f0a0e;
+  --color-usa-navy: #4264d0;
+  --color-usa-navy-dark: #171fbe;
   --color-carbon-dark: #0f172a;
   --color-carbon-light: #1e293b;
+  /* Legacy aliases */
+  --color-ice-primary: #4264d0;
+  --color-ice-secondary: #4264d0;
+  --color-neon-cyan: #d31118;
+  --color-neon-blue: #4264d0;
 }
 
 /* Base Styles */
@@ -26,8 +32,7 @@ html {
 body {
   margin: 0;
   padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  font-family: 'Barlow', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -37,37 +42,165 @@ body {
   min-height: 100vh;
 }
 
+/* Heading Font */
+h1, h2, h3, h4 {
+  font-family: 'Barlow Condensed', 'Barlow', system-ui, sans-serif;
+  font-weight: 700;
+}
+
 /* Glassmorphism Effect */
 .glass {
   background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
 .glass-dark {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
-/* Neon Glow Effects */
+/* Legacy: neon border now uses red-navy gradient */
 .neon-border {
   border: 2px solid transparent;
   background: linear-gradient(var(--color-carbon-dark), var(--color-carbon-dark)) padding-box,
-              linear-gradient(135deg, var(--color-neon-cyan), var(--color-neon-blue)) border-box;
+              linear-gradient(135deg, var(--color-usa-red), var(--color-usa-navy)) border-box;
 }
 
+/* Accent text glow (red) */
 .neon-text {
-  text-shadow: 0 0 10px rgba(0, 255, 255, 0.8),
-               0 0 20px rgba(0, 255, 255, 0.6),
-               0 0 30px rgba(0, 255, 255, 0.4);
+  text-shadow: 0 0 10px rgba(211, 17, 24, 0.7),
+               0 0 20px rgba(211, 17, 24, 0.5),
+               0 0 30px rgba(211, 17, 24, 0.3);
 }
 
-/* Speed Lines Effect */
+/* Card Hover Effects — subtle lift, red accent shadow */
+.card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(211, 17, 24, 0.15),
+              0 4px 16px rgba(0, 0, 0, 0.4);
+  border-color: rgba(211, 17, 24, 0.3) !important;
+}
+
+/* Button Styles — Team USA pill shape */
+.btn-primary {
+  background: var(--color-usa-red);
+  border-radius: 100vmax;
+  color: #ffffff;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.btn-primary:hover {
+  background: var(--color-usa-red-dark);
+  box-shadow: 0 4px 20px rgba(211, 17, 24, 0.4);
+}
+
+.btn-primary:active {
+  background: #3f0507;
+}
+
+.btn-primary:disabled {
+  background: rgba(211, 17, 24, 0.35);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #d31118, #4264d0);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #7f0a0e, #171fbe);
+}
+
+/* Selection Styling */
+::selection {
+  background: rgba(211, 17, 24, 0.3);
+  color: #ffffff;
+}
+
+::-moz-selection {
+  background: rgba(211, 17, 24, 0.3);
+  color: #ffffff;
+}
+
+/* Loading Spinner */
+.spinner {
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top: 3px solid var(--color-usa-red);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Gradient Text — red to navy */
+.gradient-text {
+  background: linear-gradient(135deg, #d31118 0%, #4264d0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-family: 'Barlow Condensed', system-ui, sans-serif;
+  font-weight: 700;
+}
+
+/* Focus Styles */
+*:focus-visible {
+  outline: 2px solid var(--color-usa-red);
+  outline-offset: 2px;
+}
+
+/* Smooth Transitions */
+.transition-smooth {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Grid Pattern Background — subtle red tint */
+.grid-pattern {
+  background-image:
+    linear-gradient(rgba(211, 17, 24, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(211, 17, 24, 0.04) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+/* Floating Animation */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+/* Speed Lines — kept but uses red */
 .speed-lines {
   position: relative;
   overflow: hidden;
@@ -79,12 +212,11 @@ body {
   top: 50%;
   left: 0;
   width: 100%;
-  height: 2px;
-  background: linear-gradient(90deg, 
-    transparent 0%, 
-    rgba(0, 255, 255, 0.8) 50%, 
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(211, 17, 24, 0.6) 50%,
     transparent 100%);
-  animation: speed-line 1.5s ease-in-out infinite;
   transform: translateY(-50%);
 }
 
@@ -93,129 +225,9 @@ body {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0.07) 50%,
     rgba(255, 255, 255, 0) 100%
   );
   background-size: 200% 100%;
   animation: shimmer 3s linear infinite;
-}
-
-/* Card Hover Effects */
-.card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(0, 255, 255, 0.2),
-              0 0 40px rgba(0, 128, 255, 0.3);
-}
-
-/* Button Styles */
-.btn-primary {
-  background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #8b5cf6 100%);
-  background-size: 200% 200%;
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-primary::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  transition: left 0.5s ease;
-}
-
-.btn-primary:hover::before {
-  left: 100%;
-}
-
-.btn-primary:hover {
-  background-position: 100% 0;
-  box-shadow: 0 0 30px rgba(0, 255, 255, 0.5);
-}
-
-/* Scrollbar Styling */
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #0ea5e9, #06b6d4);
-  border-radius: 5px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #06b6d4, #8b5cf6);
-}
-
-/* Selection Styling */
-::selection {
-  background: rgba(0, 255, 255, 0.3);
-  color: #ffffff;
-}
-
-::-moz-selection {
-  background: rgba(0, 255, 255, 0.3);
-  color: #ffffff;
-}
-
-/* Loading Spinner */
-.spinner {
-  border: 3px solid rgba(255, 255, 255, 0.1);
-  border-top: 3px solid var(--color-neon-cyan);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-
-/* Gradient Text */
-.gradient-text {
-  background: linear-gradient(135deg, #0ea5e9 0%, #06b6d4 50%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Focus Styles */
-*:focus-visible {
-  outline: 2px solid var(--color-neon-cyan);
-  outline-offset: 2px;
-}
-
-/* Smooth Transitions */
-.transition-smooth {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Grid Pattern Background */
-.grid-pattern {
-  background-image: 
-    linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 50px 50px;
-}
-
-/* Floating Animation */
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
-
-.float {
-  animation: float 3s ease-in-out infinite;
 }

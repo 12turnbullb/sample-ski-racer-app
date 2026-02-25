@@ -200,7 +200,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="glass-dark rounded-2xl shadow-glass border border-white/10 p-8">
-        <h2 className="text-3xl font-bold mb-8 gradient-text">
+        <h2 className="text-3xl font-barlow-condensed font-bold uppercase mb-8 gradient-text">
           {profile ? 'Edit Profile' : 'Create Profile'}
         </h2>
 
@@ -219,7 +219,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
 
           {/* Racer Name field */}
           <div>
-            <label htmlFor="racerName" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="racerName" className="block text-sm font-semibold text-gray-300 mb-2">
               Racer Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -230,7 +230,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               onChange={handleChange}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.racerName ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all`}
               placeholder="Enter your name"
               disabled={isLoading}
             />
@@ -241,7 +241,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
 
           {/* Height field */}
           <div>
-            <label htmlFor="height" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="height" className="block text-sm font-semibold text-gray-300 mb-2">
               Height (cm) <span className="text-red-400">*</span>
             </label>
             <input
@@ -253,7 +253,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               step="0.1"
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.height ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all`}
               placeholder="Enter height in centimeters"
               disabled={isLoading}
             />
@@ -264,7 +264,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
 
           {/* Weight field */}
           <div>
-            <label htmlFor="weight" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="weight" className="block text-sm font-semibold text-gray-300 mb-2">
               Weight (kg) <span className="text-red-400">*</span>
             </label>
             <input
@@ -276,7 +276,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               step="0.1"
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.weight ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all`}
               placeholder="Enter weight in kilograms"
               disabled={isLoading}
             />
@@ -287,7 +287,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
 
           {/* Ski Types field */}
           <div>
-            <label htmlFor="skiTypes" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="skiTypes" className="block text-sm font-semibold text-gray-300 mb-2">
               Ski Types <span className="text-red-400">*</span>
             </label>
             <input
@@ -298,21 +298,21 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               onChange={handleChange}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.skiTypes ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all`}
               placeholder="e.g., Slalom, Giant Slalom, Super-G"
               disabled={isLoading}
             />
             {errors.skiTypes && (
               <p className="mt-2 text-sm text-red-400">{errors.skiTypes}</p>
             )}
-            <p className="mt-2 text-xs text-ice-400">
+            <p className="mt-2 text-xs text-gray-500">
               Enter ski types separated by commas
             </p>
           </div>
 
           {/* Binding Measurements field */}
           <div>
-            <label htmlFor="bindingMeasurements" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="bindingMeasurements" className="block text-sm font-semibold text-gray-300 mb-2">
               Binding Measurements <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -323,21 +323,21 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               rows={3}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.bindingMeasurements ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all resize-none`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all resize-none`}
               placeholder="e.g., DIN: 8.5, Boot sole length: 305mm"
               disabled={isLoading}
             />
             {errors.bindingMeasurements && (
               <p className="mt-2 text-sm text-red-400">{errors.bindingMeasurements}</p>
             )}
-            <p className="mt-2 text-xs text-ice-400">
+            <p className="mt-2 text-xs text-gray-500">
               Enter binding measurements and settings
             </p>
           </div>
 
           {/* Personal Records field */}
           <div>
-            <label htmlFor="personalRecords" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="personalRecords" className="block text-sm font-semibold text-gray-300 mb-2">
               Personal Records <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -348,21 +348,21 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               rows={4}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.personalRecords ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all resize-none`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all resize-none`}
               placeholder="e.g., Slalom: 1:23.45 (2023-01-15), GS: 1:45.67 (2023-02-20)"
               disabled={isLoading}
             />
             {errors.personalRecords && (
               <p className="mt-2 text-sm text-red-400">{errors.personalRecords}</p>
             )}
-            <p className="mt-2 text-xs text-ice-400">
+            <p className="mt-2 text-xs text-gray-500">
               Enter your personal best times for different events
             </p>
           </div>
 
           {/* Racing Goals field */}
           <div>
-            <label htmlFor="racingGoals" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="racingGoals" className="block text-sm font-semibold text-gray-300 mb-2">
               Racing Goals <span className="text-red-400">*</span>
             </label>
             <textarea
@@ -373,7 +373,7 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               rows={4}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.racingGoals ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all resize-none`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all resize-none`}
               placeholder="Describe your racing goals and objectives for the season"
               disabled={isLoading}
             />
@@ -387,10 +387,8 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
             <button
               type="submit"
               disabled={isLoading}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-white transition-all focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-carbon-900 ${
-                isLoading
-                  ? 'bg-ice-600/50 cursor-not-allowed'
-                  : 'bg-gradient-ice hover:shadow-neon-blue'
+              className={`flex-1 btn-primary px-6 py-3 focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900 ${
+                isLoading ? 'opacity-60 cursor-not-allowed' : ''
               }`}
             >
               {isLoading ? (
@@ -426,10 +424,10 @@ export default function ProfileForm({ profile, onSave, onCancel }: ProfileFormPr
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold border transition-all focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-carbon-900 ${
+              className={`flex-1 px-6 py-3 rounded-full font-bold uppercase tracking-wide border transition-all focus:outline-none focus:ring-2 focus:ring-usa-red/50 focus:ring-offset-2 focus:ring-offset-carbon-900 ${
                 isLoading
-                  ? 'glass-dark text-ice-400 border-white/10 cursor-not-allowed opacity-50'
-                  : 'glass-dark text-ice-200 border-white/10 hover:bg-white/10'
+                  ? 'glass-dark text-gray-500 border-white/10 cursor-not-allowed opacity-50'
+                  : 'glass-dark text-gray-200 border-white/15 hover:bg-white/10 hover:border-usa-red/30'
               }`}
             >
               Cancel

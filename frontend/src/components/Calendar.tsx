@@ -218,9 +218,9 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
   if (sortedEvents.length === 0) {
     return (
       <div className="w-full max-w-4xl mx-auto p-4">
-        <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+        <div className="glass-dark border border-dashed border-white/20 rounded-2xl p-12 text-center">
           <svg
-            className="mx-auto h-12 w-12 text-gray-400 mb-4"
+            className="mx-auto h-12 w-12 text-usa-red/50 mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -232,10 +232,10 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
               d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
             />
           </svg>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-white mb-2">
             No events scheduled
           </h3>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-400">
             Add your first racing event to start building your calendar.
           </p>
         </div>
@@ -260,27 +260,26 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
               role="button"
               tabIndex={0}
               className={`
-                bg-white border rounded-lg p-4 cursor-pointer
+                glass-dark border rounded-xl p-4 cursor-pointer card-hover
                 transition-all duration-200
-                hover:shadow-md hover:border-blue-400
-                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
-                ${past ? 'border-gray-200 opacity-75' : 'border-gray-300'}
+                focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900
+                ${past ? 'border-white/5 opacity-65' : 'border-white/10 hover:border-usa-red/35'}
               `}
             >
               <div className="flex items-start justify-between gap-4">
                 {/* Event info */}
                 <div className="flex-1 min-w-0">
                   {/* Event name */}
-                  <h3 className={`text-lg font-semibold mb-2 ${past ? 'text-gray-600' : 'text-gray-900'}`}>
+                  <h3 className={`text-lg font-semibold mb-2 ${past ? 'text-gray-400' : 'text-white'}`}>
                     {event.eventName}
                   </h3>
 
                   {/* Event details */}
                   <div className="space-y-1">
                     {/* Date */}
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-gray-400">
                       <svg
-                        className="h-4 w-4 mr-2 flex-shrink-0"
+                        className="h-4 w-4 mr-2 flex-shrink-0 text-usa-navy-medium/70"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -297,9 +296,9 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
                     </div>
 
                     {/* Location */}
-                    <div className="flex items-center text-sm text-gray-600">
+                    <div className="flex items-center text-sm text-gray-400">
                       <svg
-                        className="h-4 w-4 mr-2 flex-shrink-0"
+                        className="h-4 w-4 mr-2 flex-shrink-0 text-usa-navy-medium/70"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -322,9 +321,9 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
 
                     {/* Notes (if present) */}
                     {event.notes && (
-                      <div className="flex items-start text-sm text-gray-600 mt-2">
+                      <div className="flex items-start text-sm text-gray-500 mt-2">
                         <svg
-                          className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5"
+                          className="h-4 w-4 mr-2 flex-shrink-0 mt-0.5 text-gray-500"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -348,7 +347,7 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
                   {onEventDelete && (
                     <button
                       onClick={(e) => handleDeleteClick(e, event.id)}
-                      className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                      className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all focus:outline-none focus:ring-2 focus:ring-red-500"
                       aria-label="Delete event"
                       title="Delete event"
                     >
@@ -373,9 +372,9 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
                     <span
                       className={`
                         inline-flex items-center px-3 py-1 rounded-full text-xs font-medium
-                        ${past 
-                          ? 'bg-gray-100 text-gray-600' 
-                          : 'bg-blue-100 text-blue-800'
+                        ${past
+                          ? 'bg-white/5 text-gray-500'
+                          : 'bg-usa-red/15 text-red-200 border border-usa-red/25'
                         }
                       `}
                     >
@@ -387,8 +386,8 @@ export default function Calendar({ events, onEventClick, onEventDelete }: Calend
 
               {/* Past event indicator */}
               {past && (
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <span className="text-xs text-gray-500 italic">Past event</span>
+                <div className="mt-3 pt-3 border-t border-white/5">
+                  <span className="text-xs text-gray-600 italic">Past event</span>
                 </div>
               )}
             </div>

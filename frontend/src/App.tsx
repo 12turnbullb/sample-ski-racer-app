@@ -70,11 +70,8 @@ function Navigation() {
         <div className="flex items-center justify-between h-20">
           {/* Logo/Title */}
           <div className="flex items-center space-x-3">
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-ice blur-lg opacity-50 rounded-full"></div>
-              <div className="relative text-3xl animate-float">🎿</div>
-            </div>
-            <Link to="/" className="text-2xl font-bold gradient-text hover:scale-105 transition-transform">
+            <div className="text-3xl">🎿</div>
+            <Link to="/" className="text-2xl font-barlow-condensed font-bold tracking-wide gradient-text hover:opacity-90 transition-opacity">
               Beek Racing
             </Link>
           </div>
@@ -86,19 +83,16 @@ function Navigation() {
                 <Link
                   key={item.path}
                   to={item.path}
-                  className={`group relative px-5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-300 ${
+                  className={`group px-5 py-2 rounded-full text-sm font-bold uppercase tracking-wide transition-all duration-200 ${
                     isActive(item.path)
-                      ? 'bg-gradient-ice text-white shadow-neon-blue'
-                      : 'text-ice-200 hover:text-white hover:bg-white/5'
+                      ? 'bg-usa-red text-white shadow-usa-red'
+                      : 'text-gray-300 hover:text-white hover:bg-white/8'
                   }`}
                 >
                   <span className="flex items-center gap-2">
-                    <span className="text-lg group-hover:scale-110 transition-transform">{item.icon}</span>
-                    <span className="tracking-wide">{item.label}</span>
+                    <span className="text-base">{item.icon}</span>
+                    <span>{item.label}</span>
                   </span>
-                  {isActive(item.path) && (
-                    <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-neon-cyan shadow-neon"></div>
-                  )}
                 </Link>
               ))}
             </div>
@@ -108,7 +102,7 @@ function Navigation() {
           <div className="md:hidden">
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="inline-flex items-center justify-center p-2.5 rounded-xl text-ice-200 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-neon-cyan transition-all"
+              className="inline-flex items-center justify-center p-2.5 rounded-full text-gray-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-usa-red transition-all"
               aria-expanded="false"
             >
               <span className="sr-only">Open main menu</span>
@@ -157,10 +151,10 @@ function Navigation() {
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-xl text-base font-semibold transition-all ${
+                className={`block px-4 py-3 rounded-full text-base font-bold uppercase tracking-wide transition-all ${
                   isActive(item.path)
-                    ? 'bg-gradient-ice text-white shadow-neon-blue'
-                    : 'text-ice-200 hover:text-white hover:bg-white/5'
+                    ? 'bg-usa-red text-white'
+                    : 'text-gray-300 hover:text-white hover:bg-white/8'
                 }`}
               >
                 <span className="flex items-center gap-3">
@@ -243,11 +237,11 @@ function ProfilePage({ racerId, onRacerDeleted }: ProfilePageProps) {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute inset-0 border-4 border-ice-500/20 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-transparent border-t-neon-cyan rounded-full animate-spin"></div>
-            <div className="absolute inset-2 border-4 border-transparent border-t-ice-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div className="absolute inset-0 border-4 border-usa-red/20 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-t-usa-red rounded-full animate-spin"></div>
+            <div className="absolute inset-2 border-4 border-transparent border-t-usa-navy-medium rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
           </div>
-          <p className="text-ice-300 font-medium">Loading profile...</p>
+          <p className="text-gray-400 font-medium">Loading profile...</p>
         </div>
       </div>
     );
@@ -268,7 +262,7 @@ function ProfilePage({ racerId, onRacerDeleted }: ProfilePageProps) {
               <p className="text-ice-300">{error}</p>
               <button
                 onClick={loadProfile}
-                className="mt-4 px-6 py-2.5 bg-gradient-ice text-white rounded-xl font-semibold hover:shadow-neon-blue transition-all"
+                className="mt-4 btn-primary px-6 py-2.5 font-bold"
               >
                 Retry
               </button>
@@ -371,7 +365,7 @@ function DocumentsPage({ racerId }: DocumentsPageProps) {
             </div>
             <button
               onClick={() => setError(null)}
-              className="text-ice-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-white transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -494,11 +488,11 @@ function CalendarPage({ racerId }: CalendarPageProps) {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center space-y-4">
           <div className="relative w-20 h-20 mx-auto">
-            <div className="absolute inset-0 border-4 border-ice-500/20 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-transparent border-t-neon-cyan rounded-full animate-spin"></div>
-            <div className="absolute inset-2 border-4 border-transparent border-t-ice-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div className="absolute inset-0 border-4 border-usa-red/20 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-t-usa-red rounded-full animate-spin"></div>
+            <div className="absolute inset-2 border-4 border-transparent border-t-usa-navy-medium rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
           </div>
-          <p className="text-ice-300 font-medium">Loading events...</p>
+          <p className="text-gray-400 font-medium">Loading events...</p>
         </div>
       </div>
     );
@@ -530,7 +524,7 @@ function CalendarPage({ racerId }: CalendarPageProps) {
             </div>
             <button
               onClick={() => setError(null)}
-              className="text-ice-400 hover:text-white transition-colors"
+              className="text-gray-400 hover:text-white transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -542,17 +536,17 @@ function CalendarPage({ racerId }: CalendarPageProps) {
 
       {/* Header with Add Event button and View Toggle */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <h2 className="text-3xl font-bold gradient-text">Racing Events</h2>
+        <h2 className="text-3xl font-barlow-condensed font-bold uppercase gradient-text">Racing Events</h2>
         
         <div className="flex items-center gap-3">
           {/* View Toggle */}
-          <div className="inline-flex rounded-xl glass-dark p-1 border border-white/10">
+          <div className="inline-flex rounded-full glass-dark p-1 border border-white/15">
             <button
               onClick={() => setViewMode('calendar')}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`px-4 py-1.5 text-sm font-bold uppercase tracking-wide rounded-full transition-all ${
                 viewMode === 'calendar'
-                  ? 'bg-gradient-ice text-white shadow-neon-blue'
-                  : 'text-ice-300 hover:text-white hover:bg-white/5'
+                  ? 'bg-usa-red text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-white/8'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -564,10 +558,10 @@ function CalendarPage({ racerId }: CalendarPageProps) {
             </button>
             <button
               onClick={() => setViewMode('list')}
-              className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all ${
+              className={`px-4 py-1.5 text-sm font-bold uppercase tracking-wide rounded-full transition-all ${
                 viewMode === 'list'
-                  ? 'bg-gradient-ice text-white shadow-neon-blue'
-                  : 'text-ice-300 hover:text-white hover:bg-white/5'
+                  ? 'bg-usa-red text-white'
+                  : 'text-gray-300 hover:text-white hover:bg-white/8'
               }`}
             >
               <span className="flex items-center gap-2">
@@ -582,10 +576,10 @@ function CalendarPage({ racerId }: CalendarPageProps) {
           {/* Add Event button */}
           <button
             onClick={() => setIsCreating(true)}
-            className="group px-5 py-2.5 bg-gradient-ice text-white rounded-xl font-semibold hover:shadow-neon-blue focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-carbon-900 transition-all"
+            className="btn-primary px-5 py-2.5 focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900"
           >
             <span className="flex items-center gap-2">
-              <svg className="h-5 w-5 group-hover:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               Add Event
@@ -754,16 +748,16 @@ function AppContent() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center space-y-6">
           <div className="relative w-24 h-24 mx-auto">
-            <div className="absolute inset-0 border-4 border-ice-500/20 rounded-full"></div>
-            <div className="absolute inset-0 border-4 border-transparent border-t-neon-cyan rounded-full animate-spin"></div>
-            <div className="absolute inset-2 border-4 border-transparent border-t-ice-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div className="absolute inset-0 border-4 border-usa-red/20 rounded-full"></div>
+            <div className="absolute inset-0 border-4 border-transparent border-t-usa-red rounded-full animate-spin"></div>
+            <div className="absolute inset-2 border-4 border-transparent border-t-usa-navy-medium rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
             <div className="absolute inset-0 flex items-center justify-center">
               <span className="text-3xl animate-float">🎿</span>
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-xl font-semibold gradient-text">Beek Racing</p>
-            <p className="text-ice-400">Initializing your racing platform...</p>
+            <p className="text-xl font-barlow-condensed font-bold uppercase gradient-text">Beek Racing</p>
+            <p className="text-gray-400">Initializing your racing platform...</p>
           </div>
         </div>
       </div>
@@ -796,13 +790,13 @@ function AppContent() {
               <h2 className="text-2xl font-bold text-white">
                 Initialization Failed
               </h2>
-              <p className="text-ice-300">
+              <p className="text-gray-300">
                 {initError || 'Failed to initialize application'}
               </p>
             </div>
             <button
               onClick={initializeRacer}
-              className="w-full px-6 py-3 bg-gradient-ice text-white rounded-xl font-semibold hover:shadow-neon-blue focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-carbon-900 transition-all"
+              className="w-full btn-primary px-6 py-3 focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900"
             >
               Retry
             </button>

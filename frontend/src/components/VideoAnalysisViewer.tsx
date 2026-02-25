@@ -102,9 +102,9 @@ export default function VideoAnalysisViewer({
   if (isLoading) {
     return (
       <div className="w-full max-w-6xl mx-auto p-4">
-        <h2 className="text-2xl font-bold gradient-text mb-4">Ski Form Analysis</h2>
+        <h2 className="text-2xl font-barlow-condensed font-bold uppercase gradient-text mb-4">Ski Form Analysis</h2>
         <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-cyan"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-usa-red"></div>
         </div>
       </div>
     );
@@ -113,10 +113,10 @@ export default function VideoAnalysisViewer({
   if (documents.length === 0) {
     return (
       <div className="w-full max-w-6xl mx-auto p-4">
-        <h2 className="text-2xl font-bold gradient-text mb-4">Ski Form Analysis</h2>
+        <h2 className="text-2xl font-barlow-condensed font-bold uppercase gradient-text mb-4">Ski Form Analysis</h2>
         <div className="glass-dark border-2 border-dashed border-white/20 rounded-2xl p-12 text-center">
           <svg
-            className="mx-auto h-12 w-12 text-ice-500 mb-4"
+            className="mx-auto h-12 w-12 text-usa-red/50 mb-4"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -129,7 +129,7 @@ export default function VideoAnalysisViewer({
             />
           </svg>
           <h3 className="text-lg font-semibold text-white mb-2">No videos or images yet</h3>
-          <p className="text-sm text-ice-400">
+          <p className="text-sm text-gray-400">
             Upload a ski video or image to get AI-powered form analysis.
           </p>
         </div>
@@ -165,7 +165,7 @@ export default function VideoAnalysisViewer({
                         </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-4 mt-1 text-sm text-ice-400">
+                    <div className="flex items-center gap-4 mt-1 text-sm text-gray-400">
                       <span>{formatFileSize(document.fileSize)}</span>
                       <span>•</span>
                       <span>{formatUploadDate(document.uploadedAt)}</span>
@@ -173,7 +173,7 @@ export default function VideoAnalysisViewer({
                   </div>
                   <button
                     onClick={() => handleDeleteClick(document.id)}
-                    className="ml-4 p-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all duration-200"
+                    className="ml-4 p-2 text-red-400 hover:bg-red-500/10 rounded-full transition-all duration-200"
                     aria-label="Delete"
                     title="Delete"
                   >
@@ -195,13 +195,13 @@ export default function VideoAnalysisViewer({
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {/* Media Preview */}
                     <div className="space-y-2">
-                      <h4 className="text-sm font-medium text-ice-300 mb-2 uppercase tracking-wider">
+                      <h4 className="text-sm font-bold text-gray-400 mb-2 uppercase tracking-wider">
                         {isVideo(document.fileType) ? 'Video' : 'Image'}
                       </h4>
                       <div className="bg-black rounded-lg overflow-hidden">
                         {!mediaSrc ? (
                           <div className="flex items-center justify-center h-40">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-neon-cyan" />
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-usa-red" />
                           </div>
                         ) : isVideo(document.fileType) ? (
                           <video controls className="w-full h-auto" src={mediaSrc}>
@@ -230,12 +230,12 @@ export default function VideoAnalysisViewer({
                       {expandedId === document.id ? (
                         <>
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-sm font-medium text-ice-300 uppercase tracking-wider">
+                            <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">
                               AI Form Analysis
                             </h4>
                             <button
                               onClick={() => toggleExpanded(document.id)}
-                              className="flex items-center gap-1 text-neon-cyan hover:text-ice-200 text-sm font-medium transition-colors"
+                              className="flex items-center gap-1 text-usa-red hover:text-red-300 text-sm font-medium transition-colors"
                             >
                               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -250,13 +250,13 @@ export default function VideoAnalysisViewer({
                                   components={{
                                     h1: ({ node, ...props }) => <h1 className="text-xl font-bold text-white mt-4 mb-2" {...props} />,
                                     h2: ({ node, ...props }) => <h2 className="text-lg font-bold text-white mt-3 mb-2" {...props} />,
-                                    h3: ({ node, ...props }) => <h3 className="text-base font-semibold text-ice-100 mt-2 mb-1" {...props} />,
+                                    h3: ({ node, ...props }) => <h3 className="text-base font-semibold text-gray-100 mt-2 mb-1" {...props} />,
                                     ul: ({ node, ...props }) => <ul className="list-disc list-inside space-y-1 my-2" {...props} />,
                                     ol: ({ node, ...props }) => <ol className="list-decimal list-inside space-y-1 my-2" {...props} />,
-                                    li: ({ node, ...props }) => <li className="text-ice-200" {...props} />,
-                                    p: ({ node, ...props }) => <p className="text-ice-200 my-2" {...props} />,
+                                    li: ({ node, ...props }) => <li className="text-gray-200" {...props} />,
+                                    p: ({ node, ...props }) => <p className="text-gray-200 my-2" {...props} />,
                                     strong: ({ node, ...props }) => <strong className="font-semibold text-white" {...props} />,
-                                    em: ({ node, ...props }) => <em className="italic text-ice-300" {...props} />,
+                                    em: ({ node, ...props }) => <em className="italic text-gray-300" {...props} />,
                                   }}
                                 >
                                   {document.analysis}
@@ -284,15 +284,15 @@ export default function VideoAnalysisViewer({
                           className="w-full flex items-center justify-between p-3 glass border border-white/10 rounded-xl hover:bg-white/10 transition-all"
                         >
                           <div className="flex items-center gap-2">
-                            <svg className="h-5 w-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="h-5 w-5 text-usa-red/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <span className="text-sm font-medium text-ice-200">AI Form Analysis</span>
+                            <span className="text-sm font-medium text-gray-200">AI Form Analysis</span>
                             {document.analysis && (
-                              <span className="text-xs text-ice-400">• Click to view detailed feedback</span>
+                              <span className="text-xs text-gray-500">• Click to view detailed feedback</span>
                             )}
                           </div>
-                          <svg className="h-5 w-5 text-neon-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg className="h-5 w-5 text-usa-red/70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                           </svg>
                         </button>

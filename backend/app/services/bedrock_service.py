@@ -35,9 +35,15 @@ class BedrockService:
             region_name: AWS region for Bedrock service (default: AWS_REGION env var or us-east-1)
         """
         try:
-            aws_profile = os.getenv("AWS_PROFILE", "default")
             aws_region = region_name or os.getenv("AWS_REGION", "us-east-1")
-            session = boto3.Session(profile_name=aws_profile, region_name=aws_region)
+            # Only specify profile_name if AWS_PROFILE is explicitly set.
+            # In Lambda the IAM role supplies credentials — passing profile_name="default"
+            # causes a ProfileNotFound error because ~/.aws/config doesn't exist there.
+            aws_profile = os.getenv("AWS_PROFILE")
+            session = boto3.Session(
+                profile_name=aws_profile if aws_profile else None,
+                region_name=aws_region
+            )
             self.bedrock_client = session.client(service_name='bedrock-runtime')
             # Model IDs for different media types
             self.claude_model_id = "us.anthropic.claude-sonnet-4-5-20250929-v1:0"  # For images

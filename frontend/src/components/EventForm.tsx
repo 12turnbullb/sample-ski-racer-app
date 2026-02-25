@@ -175,7 +175,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
   return (
     <div className="max-w-2xl mx-auto p-6">
       <div className="glass-dark rounded-2xl shadow-glass border border-white/10 p-8">
-        <h2 className="text-3xl font-bold mb-8 gradient-text">
+        <h2 className="text-3xl font-barlow-condensed font-bold uppercase mb-8 gradient-text">
           {event ? 'Edit Event' : 'Create Event'}
         </h2>
 
@@ -194,7 +194,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
 
           {/* Event Name field */}
           <div>
-            <label htmlFor="eventName" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="eventName" className="block text-sm font-semibold text-gray-300 mb-2">
               Event Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -205,7 +205,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
               onChange={handleChange}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.eventName ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all`}
               placeholder="e.g., Aspen Winter Classic"
               disabled={isLoading}
             />
@@ -216,7 +216,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
 
           {/* Event Date field */}
           <div>
-            <label htmlFor="eventDate" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="eventDate" className="block text-sm font-semibold text-gray-300 mb-2">
               Event Date <span className="text-red-400">*</span>
             </label>
             <input
@@ -227,7 +227,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
               onChange={handleChange}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.eventDate ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all [color-scheme:dark]`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all [color-scheme:dark]`}
               disabled={isLoading}
             />
             {errors.eventDate && (
@@ -237,7 +237,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
 
           {/* Location field */}
           <div>
-            <label htmlFor="location" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="location" className="block text-sm font-semibold text-gray-300 mb-2">
               Location <span className="text-red-400">*</span>
             </label>
             <input
@@ -248,7 +248,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
               onChange={handleChange}
               className={`w-full px-4 py-3 glass-dark border ${
                 errors.location ? 'border-red-500/50' : 'border-white/10'
-              } rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all`}
+              } rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all`}
               placeholder="e.g., Aspen, Colorado"
               disabled={isLoading}
             />
@@ -259,7 +259,7 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
 
           {/* Notes field (optional) */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-semibold text-ice-200 mb-2">
+            <label htmlFor="notes" className="block text-sm font-semibold text-gray-300 mb-2">
               Notes
             </label>
             <textarea
@@ -268,11 +268,11 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
               value={formData.notes}
               onChange={handleChange}
               rows={4}
-              className="w-full px-4 py-3 glass-dark border border-white/10 rounded-xl text-white placeholder-ice-400 focus:border-neon-cyan focus:ring-2 focus:ring-neon-cyan/50 focus:outline-none transition-all resize-none"
+              className="w-full px-4 py-3 glass-dark border border-white/10 rounded-xl text-white placeholder-gray-500 focus:border-usa-red focus:ring-2 focus:ring-usa-red/40 focus:outline-none transition-all resize-none"
               placeholder="Add any additional notes about this event (optional)"
               disabled={isLoading}
             />
-            <p className="mt-2 text-xs text-ice-400">
+            <p className="mt-2 text-xs text-gray-500">
               Optional notes about the event
             </p>
           </div>
@@ -282,10 +282,8 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
             <button
               type="submit"
               disabled={isLoading}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold text-white transition-all focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-carbon-900 ${
-                isLoading
-                  ? 'bg-ice-600/50 cursor-not-allowed'
-                  : 'bg-gradient-ice hover:shadow-neon-blue'
+              className={`flex-1 btn-primary px-6 py-3 focus:outline-none focus:ring-2 focus:ring-usa-red focus:ring-offset-2 focus:ring-offset-carbon-900 ${
+                isLoading ? 'opacity-60 cursor-not-allowed' : ''
               }`}
             >
               {isLoading ? (
@@ -321,10 +319,10 @@ export default function EventForm({ racerId, event, onSave, onCancel }: EventFor
               type="button"
               onClick={onCancel}
               disabled={isLoading}
-              className={`flex-1 px-6 py-3 rounded-xl font-semibold border transition-all focus:outline-none focus:ring-2 focus:ring-neon-cyan focus:ring-offset-2 focus:ring-offset-carbon-900 ${
+              className={`flex-1 px-6 py-3 rounded-full font-bold uppercase tracking-wide border transition-all focus:outline-none focus:ring-2 focus:ring-usa-red/50 focus:ring-offset-2 focus:ring-offset-carbon-900 ${
                 isLoading
-                  ? 'glass-dark text-ice-400 border-white/10 cursor-not-allowed opacity-50'
-                  : 'glass-dark text-ice-200 border-white/10 hover:bg-white/10'
+                  ? 'glass-dark text-gray-500 border-white/10 cursor-not-allowed opacity-50'
+                  : 'glass-dark text-gray-200 border-white/15 hover:bg-white/10 hover:border-usa-red/30'
               }`}
             >
               Cancel

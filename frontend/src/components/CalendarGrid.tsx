@@ -177,29 +177,29 @@ export default function CalendarGrid({ events, onEventClick, onEventDelete }: Ca
   // Add empty cells for days before the first day of the month
   for (let i = 0; i < firstDayOfMonth; i++) {
     dayCells.push(
-      <div key={`empty-${i}`} className="min-h-24 bg-gray-50 border border-gray-200" />
+      <div key={`empty-${i}`} className="min-h-24 bg-carbon-950/30 border border-white/5" />
     );
   }
-  
+
   // Add cells for each day of the month
   for (let day = 1; day <= daysInMonth; day++) {
     const dayEvents = getEventsForDay(day);
     const isTodayCell = isToday(day);
-    
+
     dayCells.push(
       <div
         key={day}
-        className={`min-h-20 sm:min-h-24 border border-gray-200 p-1 sm:p-2 ${
-          isTodayCell ? 'bg-blue-50' : 'bg-white'
-        } hover:bg-gray-50 transition-colors`}
+        className={`min-h-20 sm:min-h-24 border border-white/5 p-1 sm:p-2 transition-colors ${
+          isTodayCell ? 'bg-usa-red/10 border-usa-red/20' : 'bg-carbon-900/20 hover:bg-white/5'
+        }`}
       >
         {/* Day number */}
         <div className="flex justify-between items-start mb-1">
           <span
             className={`text-xs sm:text-sm font-medium ${
               isTodayCell
-                ? 'bg-blue-600 text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs'
-                : 'text-gray-700'
+                ? 'bg-usa-red text-white rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center text-xs font-bold'
+                : 'text-gray-400'
             }`}
           >
             {day}
@@ -212,16 +212,16 @@ export default function CalendarGrid({ events, onEventClick, onEventDelete }: Ca
             <div
               key={event.id}
               onClick={(e) => handleEventClick(e, event)}
-              className="group relative bg-blue-100 hover:bg-blue-200 rounded px-1 sm:px-2 py-0.5 sm:py-1 cursor-pointer text-xs transition-colors"
+              className="group relative bg-usa-red/15 hover:bg-usa-red/25 border border-usa-red/25 rounded px-1 sm:px-2 py-0.5 sm:py-1 cursor-pointer text-xs transition-all"
             >
               <div className="flex items-center justify-between gap-1">
-                <span className="text-blue-900 font-medium truncate flex-1 text-[10px] sm:text-xs">
+                <span className="text-red-100 font-medium truncate flex-1 text-[10px] sm:text-xs">
                   {event.eventName}
                 </span>
                 {onEventDelete && (
                   <button
                     onClick={(e) => handleDeleteClick(e, event.id)}
-                    className="opacity-0 group-hover:opacity-100 text-red-600 hover:text-red-800 transition-opacity flex-shrink-0"
+                    className="opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition-opacity flex-shrink-0"
                     aria-label="Delete event"
                     title="Delete event"
                   >
@@ -255,22 +255,22 @@ export default function CalendarGrid({ events, onEventClick, onEventDelete }: Ca
   return (
     <div className="w-full max-w-7xl mx-auto">
       {/* Calendar header with navigation */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
+      <div className="glass-dark rounded-xl border border-white/10 p-4 mb-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-800">
+          <h2 className="text-xl sm:text-2xl font-barlow-condensed font-bold uppercase tracking-wide text-white">
             {getMonthName(currentMonth)} {currentYear}
           </h2>
-          
+
           <div className="flex items-center gap-2">
             <button
               onClick={goToToday}
-              className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+              className="px-4 py-1.5 text-sm font-bold uppercase tracking-wide text-gray-200 glass border border-white/15 rounded-full hover:bg-white/10 hover:border-usa-red/30 transition-all"
             >
               Today
             </button>
             <button
               onClick={goToPreviousMonth}
-              className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-1.5 text-gray-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
               aria-label="Previous month"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,7 +279,7 @@ export default function CalendarGrid({ events, onEventClick, onEventDelete }: Ca
             </button>
             <button
               onClick={goToNextMonth}
-              className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+              className="p-1.5 text-gray-300 hover:text-white hover:bg-white/10 rounded-full transition-all"
               aria-label="Next month"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -291,13 +291,13 @@ export default function CalendarGrid({ events, onEventClick, onEventDelete }: Ca
       </div>
 
       {/* Calendar grid */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="glass-dark rounded-xl border border-white/10 overflow-hidden">
         {/* Day of week headers */}
-        <div className="grid grid-cols-7 bg-gray-50 border-b border-gray-200">
+        <div className="grid grid-cols-7 bg-white/5 border-b border-white/10">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
             <div
               key={day}
-              className="py-2 text-center text-xs sm:text-sm font-semibold text-gray-700 border-r border-gray-200 last:border-r-0"
+              className="py-2 text-center text-xs sm:text-sm font-bold uppercase text-gray-500 border-r border-white/5 last:border-r-0"
             >
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden">{day.charAt(0)}</span>

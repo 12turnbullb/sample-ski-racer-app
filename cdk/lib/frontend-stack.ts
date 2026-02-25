@@ -6,7 +6,6 @@ import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
 
 interface FrontendStackProps extends cdk.StackProps {
-  frontendBucket: s3.Bucket;
   apiUrl: string;
 }
 
@@ -15,6 +14,20 @@ export class FrontendStack extends cdk.Stack {
 
   constructor(scope: Construct, id: string, props: FrontendStackProps) {
     super(scope, id, props);
+
+    // Frontend bucket — private, served exclusively via CloudFront OAC
+    const frontendBucket = new s3.Bucket(this, 'FrontendBucket', {
+      bucketName: `ski-app-frontend-${this.account}-${this.region}`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      autoDeleteObjects: true,
+    });
+
+    new cdk.CfnOutput(this, 'FrontendBucketName', {
+      value: frontendBucket.bucketName,
+      description: 'S3 bucket for React SPA static files',
+    });
 
     // Origin Access Control for S3 frontend bucket
     const oac = new cloudfront.S3OriginAccessControl(this, 'FrontendOAC', {
@@ -35,7 +48,7 @@ export class FrontendStack extends cdk.Stack {
 
       // Default behavior: React SPA from S3
       defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(props.frontendBucket, {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(frontendBucket, {
           originAccessControl: oac,
         }),
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
@@ -71,12 +84,12 @@ export class FrontendStack extends cdk.Stack {
     });
 
     // Grant CloudFront OAC read access to the frontend bucket
-    props.frontendBucket.addToResourcePolicy(
+    frontendBucket.addToResourcePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
         principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
         actions: ['s3:GetObject'],
-        resources: [props.frontendBucket.arnForObjects('*')],
+        resources: [frontendBucket.arnForObjects('*')],
         conditions: {
           StringEquals: {
             'AWS:SourceArn': `arn:aws:cloudfront::${this.account}:distribution/${distribution.distributionId}`,
