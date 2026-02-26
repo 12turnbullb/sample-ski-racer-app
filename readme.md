@@ -17,6 +17,49 @@ Beek Racing provides a single-racer dashboard with four views:
 
 ---
 
+## Getting Started
+
+### Prerequisites
+
+Before you can run or deploy this project, make sure you have the following installed and configured:
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [Git](https://git-scm.com/) | Any | Clone the repository |
+| [Node.js](https://nodejs.org/) | 20+ | Frontend dev server, CDK CLI |
+| [Python](https://www.python.org/) | 3.12+ | Backend API |
+| [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) | v2 | Deploy to AWS, manage resources |
+| [AWS CDK](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html) | Latest | Infrastructure as code |
+
+You also need:
+
+- **An AWS account** — sign up at [aws.amazon.com](https://aws.amazon.com). The deployment uses several services: Lambda, API Gateway, Aurora Serverless, S3, CloudFront, and Bedrock.
+- **AWS Bedrock model access** — in the AWS Console, navigate to **Bedrock → Model access** and enable access to an Anthropic Claude model (e.g. Claude 3 Haiku or Claude 3 Sonnet) in your chosen region. This is required for the AI video analysis feature.
+
+### Install the AWS CDK CLI
+
+```bash
+npm install -g aws-cdk
+cdk --version   # verify install
+```
+
+### Configure the AWS CLI
+
+```bash
+aws configure
+```
+
+You will be prompted for your AWS Access Key ID, Secret Access Key, default region (e.g. `us-east-1`), and output format. If you do not have IAM credentials yet, create them in the AWS Console under **IAM → Users → Security credentials**.
+
+### Clone the repository
+
+```bash
+git clone https://github.com/12turnbullb/ski-app-sample.git
+cd ski-app-sample
+```
+
+---
+
 ## Architecture
 
 ```
@@ -53,10 +96,7 @@ Five CDK stacks in `cdk/`:
 
 ## Local Development
 
-### Prerequisites
-- Python 3.12+
-- Node.js 20+
-- AWS CLI (optional — only needed for S3/Bedrock features locally)
+Run the app locally without any AWS account. The backend automatically falls back to a local SQLite database when no cloud credentials are present.
 
 ### Backend
 
@@ -87,6 +127,112 @@ The app starts at `http://localhost:5173` and proxies API requests to the backen
 | Variable | Description |
 |----------|-------------|
 | `VITE_API_BASE_URL` | Backend base URL (defaults to `http://localhost:8000` in dev) |
+
+---
+
+## AWS Deployment
+
+This section walks you through deploying the full stack to your own AWS account from scratch.
+
+### Step 1 — Bootstrap CDK
+
+CDK bootstrap creates the S3 bucket and IAM roles CDK needs to deploy assets into your account. You only need to do this once per account/region.
+
+```bash
+# Get your AWS account ID
+aws sts get-caller-identity --query Account --output text
+
+# Bootstrap CDK (replace ACCOUNT_ID and REGION with your values)
+cd cdk
+npm install
+npx cdk bootstrap aws://ACCOUNT_ID/REGION
+```
+
+Example:
+```bash
+npx cdk bootstrap aws://123456789012/us-east-1
+```
+
+### Step 2 — Enable Bedrock model access
+
+In the AWS Console, go to **Amazon Bedrock → Model access** and request access to the Anthropic Claude model you want to use. Model access is approved instantly for most regions. The backend's `services/bedrock.py` specifies which model ID to call — update it if you choose a different model.
+
+### Step 3 — Build the Lambda package
+
+The Lambda runtime runs on Amazon Linux. Python packages with native extensions (like pydantic-core) must be compiled for that platform, not your local machine.
+
+```bash
+# Run from the repo root
+./scripts/build_lambda.sh
+```
+
+This script installs dependencies targeting `manylinux2014_x86_64` / Python 3.12 and outputs them to `backend/lambda_pkg/`. Run this script before every backend deploy.
+
+### Step 4 — Deploy all infrastructure
+
+```bash
+cd cdk
+npx cdk deploy --all
+```
+
+CDK will display a summary of the IAM permissions it needs to create and ask for confirmation. Type `y` to proceed. The first deploy takes approximately 10–15 minutes because Aurora Serverless takes time to provision.
+
+After the deploy completes, CDK will print output values including your:
+- **API Gateway URL** — the backend endpoint
+- **CloudFront URL** — the frontend URL
+- **S3 bucket names** — for uploads and static assets
+
+Copy these values; you will need them in the next step.
+
+### Step 5 — Configure and build the frontend
+
+Create or update `frontend/.env.production` with your API Gateway URL from Step 4:
+
+```bash
+# frontend/.env.production
+VITE_API_BASE_URL=https://YOUR_API_GATEWAY_ID.execute-api.REGION.amazonaws.com
+```
+
+Then build and deploy the frontend:
+
+```bash
+cd frontend
+npm install
+npm run build
+
+# Sync to the S3 bucket CDK created (use the bucket name from CDK outputs)
+aws s3 sync dist/ s3://YOUR_FRONTEND_BUCKET_NAME/ --delete
+
+# Invalidate the CloudFront cache so the new build is served immediately
+aws cloudfront create-invalidation \
+  --distribution-id YOUR_CLOUDFRONT_DISTRIBUTION_ID \
+  --paths "/*"
+```
+
+Your app is now live at the CloudFront URL from Step 4.
+
+---
+
+### Subsequent backend deploys
+
+After any backend code change, rebuild and redeploy only the API stack:
+
+```bash
+./scripts/build_lambda.sh
+cd cdk
+npx cdk deploy ApiStack
+```
+
+### Subsequent frontend deploys
+
+```bash
+cd frontend
+npm run build
+aws s3 sync dist/ s3://YOUR_FRONTEND_BUCKET_NAME/ --delete
+aws cloudfront create-invalidation \
+  --distribution-id YOUR_CLOUDFRONT_DISTRIBUTION_ID \
+  --paths "/*"
+```
 
 ---
 
@@ -162,63 +308,6 @@ cd backend
 source venv/bin/activate
 pytest
 ```
-
----
-
-## AWS Deployment
-
-### Prerequisites
-- AWS CLI configured with appropriate permissions
-- Node.js (for CDK)
-- CDK bootstrapped: `npx cdk bootstrap aws://684069405823/us-east-1`
-
-### Build and deploy
-
-```bash
-# 1. Build the Lambda package (Linux ELF wheels — required for pydantic_core on Lambda)
-./scripts/build_lambda.sh
-
-# 2. Deploy backend infrastructure
-cd cdk
-npx cdk deploy ApiStack
-
-# 3. Build and deploy frontend
-cd ../frontend
-npm run build
-aws s3 sync dist/ s3://ski-app-frontend-684069405823-us-east-1/ --delete
-aws cloudfront create-invalidation --distribution-id E2937UB6FM1NLL --paths "/*"
-```
-
-### Deploy all stacks (first time)
-
-```bash
-cd cdk
-npx cdk deploy --all
-```
-
-### Live endpoints
-
-| Resource | URL |
-|----------|-----|
-| Frontend | `https://d15vamwn6ru4nt.cloudfront.net` |
-| API Gateway | `https://2xijxzzrm7.execute-api.us-east-1.amazonaws.com` |
-
-### AWS resources
-
-| Resource | Name / ARN |
-|----------|-----------|
-| AWS Account | `684069405823` (us-east-1) |
-| Lambda | `ApiStack-SkiAppFunction73E938A9-p0cOfKjEuAgK` |
-| CloudFront Distribution | `E2937UB6FM1NLL` |
-| Uploads Bucket | `ski-app-uploads-684069405823-us-east-1` |
-| Frontend Bucket | `ski-app-frontend-684069405823-us-east-1` |
-| DB Secret ARN | `arn:aws:secretsmanager:us-east-1:684069405823:secret:ski-app/db-credentials-rf465n` |
-
-### Lambda build notes
-
-`scripts/build_lambda.sh` installs dependencies targeting `manylinux2014_x86_64` / Python 3.12 so compiled extensions (pydantic_core, etc.) run on Amazon Linux. `.dist-info` directories are intentionally preserved — pg8000's `scramp` dependency uses `importlib.metadata` at runtime.
-
-Run the build script before every `cdk deploy ApiStack`.
 
 ---
 
